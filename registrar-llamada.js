@@ -370,6 +370,7 @@ function updateCancellationReasons() {
         'Cobro de comisiones (retiros o compras internacionales)',
         'Mala experiencia',
         'No sabe usar la App',
+        'Recontacto',
         'Otro'
     ];
     
@@ -388,6 +389,7 @@ function updateCancellationReasons() {
         'Cobro de cuota de manejo',
         'Tarjeta sin cupo (Abre Caminos)',
         'No sabe usar la App',
+        'Recontacto',
         'Otro'
     ];
     
