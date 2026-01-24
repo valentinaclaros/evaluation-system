@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Análisis de Mejoras - Sistema de Evaluación</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="nav-brand">
+                <h1>📊 Sistema de Evaluación</h1>
+            </div>
+            <ul class="nav-menu">
+                <li><a href="index.html">Dashboard</a></li>
+                <li><a href="detalle-auditorias.html">Detalle de Auditorías</a></li>
+                <li><a href="detalle-feedbacks.html">Detalle de Feedbacks</a></li>
+                <li><a href="analisis.html" class="active">Análisis de Mejoras</a></li>
+                <li><a href="analisis-avanzado.html">Análisis Avanzado</a></li>
+                <li><a href="agentes.html">Gestión de Agentes</a></li>
+                <li><a href="sj-pendientes.html">SJ Pendientes</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <main class="container">
+        <header class="page-header">
+            <h2>Análisis de Mejoras Post-Feedback</h2>
+            <p class="subtitle">Compara el desempeño del agente antes y después del feedback (Datos desde el 1 de enero de 2026)</p>
+        </header>
+
+        <!-- Selector de agente y feedback -->
+        <div class="form-card">
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="analysisAgentId">Seleccionar Agente</label>
+                    <select id="analysisAgentId" name="analysisAgentId">
+                        <option value="">Selecciona un agente para analizar</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="analysisFeedbackId">Seleccionar Feedback</label>
+                    <select id="analysisFeedbackId" name="analysisFeedbackId">
+                        <option value="">Primero selecciona un agente</option>
+                    </select>
+                </div>
+
+                <div class="form-group" style="display: flex; align-items: flex-end;">
+                    <button onclick="performAnalysis()" class="btn btn-primary">Analizar</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Contenedor de resultados -->
+        <div id="analysisResults" style="display: none;">
+            
+            <!-- Información del feedback -->
+            <div class="card">
+                <div class="card-header">
+                    <h3>Información del Feedback</h3>
+                </div>
+                <div class="card-body">
+                    <div class="feedback-info-grid">
+                        <div class="info-item">
+                            <span class="info-label">Fecha del Feedback:</span>
+                            <span class="info-value" id="feedbackDateInfo">-</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Dado por:</span>
+                            <span class="info-value" id="feedbackGivenByInfo">-</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Tipo:</span>
+                            <span class="info-value" id="feedbackTypeInfo">-</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Prioridad:</span>
+                            <span class="info-value" id="feedbackPriorityInfo">-</span>
+                        </div>
+                    </div>
+                    <div class="feedback-message">
+                        <strong>Mensaje:</strong>
+                        <p id="feedbackMessageInfo">-</p>
+                    </div>
+                    <div class="feedback-meta" style="margin-top: 10px; display: flex; gap: 20px; align-items: center;">
+                        <div>
+                            <strong>Proceso:</strong> <span id="feedbackProcessInfo">-</span>
+                        </div>
+                        <div>
+                            <strong>Additional Steps:</strong> <span id="feedbackAdditionalStepsInfo">-</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Comparativa de métricas -->
+            <div class="section-grid">
+                <div class="card">
+                    <div class="card-header">
+                        <h3>Antes del Feedback</h3>
+                        <span class="period-label" id="beforePeriod">-</span>
+                    </div>
+                    <div class="card-body">
+                        <div class="metric-comparison">
+                            <div class="metric-item">
+                                <span class="metric-label">Llamadas auditadas</span>
+                                <span class="metric-big-value" id="beforeCallsCount">0</span>
+                            </div>
+                            <div class="metric-item">
+                                <span class="metric-label">Errores identificados</span>
+                                <span class="metric-big-value error" id="beforeErrorsCount">0</span>
+                            </div>
+                            <div class="metric-item">
+                                <span class="metric-label">Tasa de error</span>
+                                <span class="metric-big-value" id="beforeErrorRate">0%</span>
+                            </div>
+                            <div class="metric-item">
+                                <span class="metric-label">Errores críticos</span>
+                                <span class="metric-big-value critical" id="beforeCriticalErrors">0</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <h3>Después del Feedback</h3>
+                        <span class="period-label" id="afterPeriod">-</span>
+                    </div>
+                    <div class="card-body">
+                        <div class="metric-comparison">
+                            <div class="metric-item">
+                                <span class="metric-label">Llamadas auditadas</span>
+                                <span class="metric-big-value" id="afterCallsCount">0</span>
+                            </div>
+                            <div class="metric-item">
+                                <span class="metric-label">Errores identificados</span>
+                                <span class="metric-big-value error" id="afterErrorsCount">0</span>
+                            </div>
+                            <div class="metric-item">
+                                <span class="metric-label">Tasa de error</span>
+                                <span class="metric-big-value" id="afterErrorRate">0%</span>
+                            </div>
+                            <div class="metric-item">
+                                <span class="metric-label">Errores críticos</span>
+                                <span class="metric-big-value critical" id="afterCriticalErrors">0</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Indicadores de mejora -->
+            <div class="card">
+                <div class="card-header">
+                    <h3>Indicadores de Mejora</h3>
+                </div>
+                <div class="card-body">
+                    <div class="improvement-indicators">
+                        <div class="indicator-card">
+                            <div class="indicator-icon" id="errorRateIcon">📊</div>
+                            <div class="indicator-content">
+                                <h4>Tasa de Error</h4>
+                                <div class="indicator-change" id="errorRateChange">
+                                    <span class="change-value">-</span>
+                                    <span class="change-label">vs período anterior</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="indicator-card">
+                            <div class="indicator-icon" id="criticalErrorsIcon">⚠️</div>
+                            <div class="indicator-content">
+                                <h4>Errores Críticos</h4>
+                                <div class="indicator-change" id="criticalErrorsChange">
+                                    <span class="change-value">-</span>
+                                    <span class="change-label">vs período anterior</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="indicator-card">
+                            <div class="indicator-icon" id="tnpsIcon">⭐</div>
+                            <div class="indicator-content">
+                                <h4>Satisfacción TNPS</h4>
+                                <div class="indicator-change" id="tnpsChange">
+                                    <span class="change-value">-</span>
+                                    <span class="change-label">vs período anterior</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="conclusion-box" id="conclusionBox">
+                        <h4>💡 Conclusión</h4>
+                        <p id="conclusionText">-</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TNPS Comparativo -->
+            <div class="section-grid">
+                <div class="card">
+                    <div class="card-header">
+                        <h3>TNPS - Antes del Feedback</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="tnps-mini-chart">
+                            <div class="tnps-mini-item">
+                                <span>😊 Promotores</span>
+                                <span id="beforePromoters">0</span>
+                            </div>
+                            <div class="tnps-mini-item">
+                                <span>😐 Neutrales</span>
+                                <span id="beforeNeutral">0</span>
+                            </div>
+                            <div class="tnps-mini-item">
+                                <span>😞 Detractores</span>
+                                <span id="beforeDetractors">0</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <h3>TNPS - Después del Feedback</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="tnps-mini-chart">
+                            <div class="tnps-mini-item">
+                                <span>😊 Promotores</span>
+                                <span id="afterPromoters">0</span>
+                            </div>
+                            <div class="tnps-mini-item">
+                                <span>😐 Neutrales</span>
+                                <span id="afterNeutral">0</span>
+                            </div>
+                            <div class="tnps-mini-item">
+                                <span>😞 Detractores</span>
+                                <span id="afterDetractors">0</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Detalles de llamadas -->
+            <div class="card">
+                <div class="card-header">
+                    <h3>Detalle de Llamadas Auditadas</h3>
+                </div>
+                <div class="card-body">
+                    <div class="tabs">
+                        <button class="tab-button active" onclick="switchTab('before')">Antes del Feedback</button>
+                        <button class="tab-button" onclick="switchTab('after')">Después del Feedback</button>
+                    </div>
+                    
+                    <div id="beforeCallsTab" class="tab-content active">
+                        <div class="table-container">
+                            <table class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>Fecha</th>
+                                        <th>Customer ID</th>
+                                        <th>Tipo</th>
+                                        <th>Criticidad</th>
+                                        <th>Error</th>
+                                        <th>TNPS</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="beforeCallsTable">
+                                    <tr><td colspan="6" class="no-data">No hay datos</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div id="afterCallsTab" class="tab-content">
+                        <div class="table-container">
+                            <table class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>Fecha</th>
+                                        <th>Customer ID</th>
+                                        <th>Tipo</th>
+                                        <th>Criticidad</th>
+                                        <th>Error</th>
+                                        <th>TNPS</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="afterCallsTable">
+                                    <tr><td colspan="6" class="no-data">No hay datos</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Mensaje cuando no hay datos -->
+        <div id="noDataMessage" class="empty-state">
+            <div class="empty-state-icon">📊</div>
+            <h3>Selecciona un agente y feedback para ver el análisis</h3>
+            <p>El análisis comparará el desempeño del agente en los 30 días antes y después del feedback</p>
+        </div>
+    </main>
+
+    <!-- Supabase SDK v2 -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.0/dist/umd/supabase.min.js"></script>
+    <script src="supabase-config.js"></script>
+    <script src="app.js"></script>
+    <script src="analisis.js"></script>
+</body>
+</html>
+

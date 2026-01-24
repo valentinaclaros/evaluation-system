@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Detalle de Auditorías - Sistema de Evaluación</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        .agent-card {
+            background: var(--bg-primary);
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow-sm);
+            margin-bottom: 1rem;
+            overflow: hidden;
+            transition: var(--transition);
+        }
+        
+        .agent-card:hover {
+            box-shadow: var(--shadow-md);
+        }
+        
+        .agent-header {
+            padding: 1.5rem;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: var(--transition);
+        }
+        
+        .agent-header:hover {
+            opacity: 0.95;
+        }
+        
+        .agent-info {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            gap: 2rem;
+            flex-wrap: wrap;
+        }
+        
+        .agent-name {
+            font-size: 1.25rem;
+            font-weight: 700;
+            margin-bottom: 0;
+            margin-right: 1rem;
+        }
+        
+        .agent-stats {
+            display: flex;
+            gap: 2rem;
+            font-size: 0.9rem;
+            opacity: 0.95;
+            align-items: center;
+        }
+        
+        .agent-stat {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .agent-stat-label {
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+        
+        .agent-stat-value {
+            font-size: 1rem;
+            font-weight: 700;
+        }
+        
+        .expand-icon {
+            font-size: 1.5rem;
+            transition: transform 0.3s ease;
+        }
+        
+        .expand-icon.expanded {
+            transform: rotate(180deg);
+        }
+        
+        .agent-audits {
+            display: none;
+            padding: 1.5rem;
+            background: var(--bg-secondary);
+        }
+        
+        .agent-audits.expanded {
+            display: block;
+        }
+        
+        .audit-item {
+            background: var(--bg-primary);
+            border-radius: var(--border-radius-sm);
+            padding: 1.25rem;
+            margin-bottom: 1rem;
+            box-shadow: var(--shadow-sm);
+            transition: var(--transition);
+        }
+        
+        .audit-item:hover {
+            box-shadow: var(--shadow-md);
+            transform: translateY(-2px);
+        }
+        
+        .audit-header-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            margin-bottom: 1rem;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+        
+        .audit-date {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+        
+        .audit-badges {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+        
+        .audit-details {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+        
+        .audit-detail-item {
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+        }
+        
+        .audit-detail-label {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+        
+        .audit-detail-value {
+            font-size: 0.95rem;
+            color: var(--text-primary);
+            font-weight: 600;
+        }
+        
+        .audit-errors {
+            background: var(--bg-tertiary);
+            padding: 1rem;
+            border-radius: var(--border-radius-sm);
+            border-left: 4px solid var(--error-color);
+        }
+        
+        .audit-errors-title {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 0.5rem;
+        }
+        
+        .audit-errors-list {
+            list-style: none;
+            padding-left: 0;
+        }
+        
+        .audit-errors-list li {
+            padding: 0.25rem 0;
+            color: var(--text-primary);
+            font-size: 0.9rem;
+        }
+        
+        .audit-errors-list li:before {
+            content: "• ";
+            color: var(--error-color);
+            font-weight: bold;
+            margin-right: 0.5rem;
+        }
+        
+        .audit-actions {
+            display: flex;
+            gap: 0.75rem;
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border-color);
+        }
+        
+        .no-audits {
+            text-align: center;
+            padding: 3rem;
+            color: var(--text-light);
+            font-size: 1.1rem;
+        }
+        
+        .filter-section {
+            background: var(--bg-primary);
+            border-radius: var(--border-radius);
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            box-shadow: var(--shadow-sm);
+        }
+        
+        .filter-row {
+            display: flex;
+            gap: 1rem;
+            align-items: end;
+            flex-wrap: wrap;
+        }
+        
+        .filter-group {
+            flex: 1;
+            min-width: 200px;
+        }
+        
+        .filter-group label {
+            display: block;
+            font-weight: 500;
+            margin-bottom: 0.5rem;
+            color: var(--text-secondary);
+        }
+        
+        .filter-group input,
+        .filter-group select {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius-sm);
+            font-family: inherit;
+        }
+        
+        /* Responsivo */
+        @media (max-width: 768px) {
+            .agent-stats {
+                gap: 1rem;
+            }
+            
+            .agent-stat {
+                font-size: 0.85rem;
+            }
+            
+            .agent-name {
+                font-size: 1.1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="nav-brand">
+                <h1>📊 Sistema de Evaluación</h1>
+            </div>
+            <ul class="nav-menu">
+                <li><a href="index.html">Dashboard</a></li>
+                <li><a href="detalle-auditorias.html" class="active">Detalle de Auditorías</a></li>
+                <li><a href="detalle-feedbacks.html">Detalle de Feedbacks</a></li>
+                <li><a href="analisis-avanzado.html">Análisis Avanzado</a></li>
+                <li><a href="agentes.html">Gestión de Agentes</a></li>
+                <li><a href="sj-pendientes.html">SJ Pendientes</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <main class="container">
+        <header class="page-header">
+            <h2>Detalle de Auditorías por Agente</h2>
+            <p class="subtitle">Haz clic en un agente para ver todas sus auditorías</p>
+        </header>
+
+        <!-- Filtros -->
+        <div class="filter-section">
+            <div class="filter-row">
+                <div class="filter-group">
+                    <label for="filterDateFrom">Desde:</label>
+                    <input type="date" id="filterDateFrom">
+                </div>
+                <div class="filter-group">
+                    <label for="filterDateTo">Hasta:</label>
+                    <input type="date" id="filterDateTo">
+                </div>
+                <div class="filter-group">
+                    <label for="filterCriticality">Criticidad:</label>
+                    <select id="filterCriticality">
+                        <option value="">Todas</option>
+                        <option value="critico">Crítico</option>
+                        <option value="alto">Alto</option>
+                        <option value="medio">Medio</option>
+                        <option value="perfecto">Perfecto</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label for="filterBpo">BPO:</label>
+                    <select id="filterBpo">
+                        <option value="">Todos</option>
+                        <option value="teleperformance">Teleperformance</option>
+                        <option value="konecta">Konecta</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <button onclick="applyFilters()" class="btn btn-primary" style="width: 100%;">Aplicar Filtros</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Contenedor de agentes -->
+        <div id="agentsContainer">
+            <div class="no-audits">
+                Cargando agentes...
+            </div>
+        </div>
+    </main>
+
+    <!-- Supabase SDK v2 -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.0/dist/umd/supabase.min.js"></script>
+    <script src="supabase-config.js"></script>
+    <script src="app.js"></script>
+    <script src="detalle-auditorias.js"></script>
+</body>
+</html>

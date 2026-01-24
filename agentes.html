@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestión de Agentes - Sistema de Evaluación</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* Mejoras de espaciado para el modal de agentes */
+        #agentModal .modal-content {
+            max-width: 600px;
+            padding: 2rem;
+        }
+        
+        #agentModal .modal-header {
+            margin-bottom: 2rem;
+            padding-bottom: 1rem;
+        }
+        
+        #agentModal .form-group {
+            margin-bottom: 1.5rem;
+        }
+        
+        #agentModal .form-group label {
+            display: block;
+            margin-bottom: 0.75rem;
+            font-weight: 600;
+            font-size: 0.95rem;
+            color: var(--text-color);
+        }
+        
+        #agentModal .form-group input,
+        #agentModal .form-group select,
+        #agentModal .form-group textarea {
+            width: 100%;
+            padding: 0.875rem 1rem;
+            font-size: 1rem;
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+        
+        #agentModal .form-group input:focus,
+        #agentModal .form-group select:focus,
+        #agentModal .form-group textarea:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+        }
+        
+        #agentModal .form-group textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+        
+        #agentModal .modal-actions {
+            margin-top: 2rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            gap: 1rem;
+            justify-content: flex-end;
+        }
+        
+        #agentModal .modal-actions button {
+            padding: 0.75rem 2rem;
+            font-size: 1rem;
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="nav-brand">
+                <h1>📊 Sistema de Evaluación</h1>
+            </div>
+            <ul class="nav-menu">
+                <li><a href="index.html">Dashboard</a></li>
+                <li><a href="detalle-auditorias.html">Detalle de Auditorías</a></li>
+                <li><a href="detalle-feedbacks.html">Detalle de Feedbacks</a></li>
+                <li><a href="analisis-avanzado.html">Análisis Avanzado</a></li>
+                <li><a href="agentes.html" class="active">Gestión de Agentes</a></li>
+                <li><a href="sj-pendientes.html">SJ Pendientes</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <main class="container">
+        <header class="page-header">
+            <h2>Gestión de Agentes</h2>
+            <button onclick="openAddAgentModal()" class="btn btn-primary">+ Agregar Agente</button>
+        </header>
+
+        <!-- Lista de agentes -->
+        <div class="card">
+            <div class="card-header">
+                <h3>Agentes Registrados</h3>
+                <div class="search-box">
+                    <input type="text" id="searchAgent" placeholder="Buscar agente..." onkeyup="filterAgents()">
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="table-container">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Nombre Completo</th>
+                                <th>Email</th>
+                                <th>Departamento</th>
+                                <th>Estado</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="agentsListTable">
+                            <tr>
+                                <td colspan="6" class="no-data">No hay agentes registrados. Agrega el primero.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Modal para agregar/editar agente -->
+    <div id="agentModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modalTitle">Agregar Nuevo Agente</h3>
+                <span class="modal-close" onclick="closeAgentModal()">&times;</span>
+            </div>
+            <form id="agentForm">
+                <input type="hidden" id="editAgentId" name="editAgentId">
+                
+                <div class="form-group">
+                    <label for="agentName">Nombre Completo *</label>
+                    <input type="text" id="agentName" name="agentName" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="agentEmail">Email *</label>
+                    <input type="email" id="agentEmail" name="agentEmail" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="agentDepartment">Departamento *</label>
+                    <select id="agentDepartment" name="agentDepartment" required>
+                        <option value="">Seleccionar</option>
+                        <option value="phone">Phone</option>
+                        <option value="chat">Chat</option>
+                        <option value="email">Email</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="agentStatus">Estado *</label>
+                    <select id="agentStatus" name="agentStatus" required>
+                        <option value="activo">Activo</option>
+                        <option value="inactivo">Inactivo</option>
+                        <option value="vacaciones">En Vacaciones</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="agentNotes">Notas Adicionales</label>
+                    <textarea id="agentNotes" name="agentNotes" rows="3"></textarea>
+                </div>
+
+                <div class="modal-actions">
+                    <button type="button" onclick="closeAgentModal()" class="btn btn-secondary">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Guardar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal de confirmación para eliminar -->
+    <div id="deleteModal" class="modal">
+        <div class="modal-content modal-small">
+            <div class="modal-header">
+                <h3>Confirmar Eliminación</h3>
+                <span class="modal-close" onclick="closeDeleteModal()">&times;</span>
+            </div>
+            <div class="modal-body">
+                <p>¿Estás seguro de que deseas eliminar este agente?</p>
+                <p class="warning-text">Esta acción no se puede deshacer. El agente seguirá apareciendo en auditorías ya registradas.</p>
+            </div>
+            <div class="modal-actions">
+                <button type="button" onclick="closeDeleteModal()" class="btn btn-secondary">Cancelar</button>
+                <button type="button" onclick="confirmDeleteAgent()" class="btn btn-danger">Eliminar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Supabase SDK v2 -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.0/dist/umd/supabase.min.js"></script>
+    <script src="supabase-config.js"></script>
+    <script src="app.js"></script>
+    <script src="agentes.js"></script>
+</body>
+</html>
+

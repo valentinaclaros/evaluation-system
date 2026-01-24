@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registrar Feedback - Sistema de Evaluación</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="nav-brand">
+                <h1>📊 Sistema de Evaluación</h1>
+            </div>
+            <ul class="nav-menu">
+                <li><a href="index.html">Dashboard</a></li>
+                <li><a href="detalle-auditorias.html">Detalle de Auditorías</a></li>
+                <li><a href="detalle-feedbacks.html">Detalle de Feedbacks</a></li>
+                <li><a href="analisis-avanzado.html">Análisis Avanzado</a></li>
+                <li><a href="agentes.html">Gestión de Agentes</a></li>
+                <li><a href="sj-pendientes.html">SJ Pendientes</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <main class="container">
+        <header class="page-header">
+            <h2>Registrar Feedback al Agente</h2>
+            <p class="subtitle">Proporciona retroalimentación constructiva basada en las auditorías</p>
+        </header>
+
+        <div class="form-card">
+            <form id="feedbackForm" class="audit-form">
+                <div class="form-section">
+                    <h3 class="section-title">Selección de Agente</h3>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="feedbackAgentId">Agente *</label>
+                            <select id="feedbackAgentId" name="feedbackAgentId" required>
+                                <option value="">Selecciona un agente</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="feedbackDate">Fecha del Feedback *</label>
+                            <input type="date" id="feedbackDate" name="feedbackDate" required>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="feedbackGivenBy">Retroalimentación Dada Por *</label>
+                        <select id="feedbackGivenBy" name="feedbackGivenBy" required>
+                            <option value="">Seleccionar</option>
+                            <option value="Daniel Rodríguez">Daniel Rodríguez</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Resumen de errores recientes del agente -->
+                <div class="form-section" id="agentErrorsSummary" style="display: none;">
+                    <h3 class="section-title">Errores Recientes del Agente</h3>
+                    <div class="info-box">
+                        <div class="info-row">
+                            <span class="info-label">Llamadas auditadas (últimos 30 días):</span>
+                            <span class="info-value" id="recentCallsCount">0</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Errores identificados:</span>
+                            <span class="info-value" id="recentErrorsCount">0</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Tasa de error:</span>
+                            <span class="info-value" id="errorRate">0%</span>
+                        </div>
+                    </div>
+                    
+                    <div class="recent-errors-list" id="recentErrorsList">
+                        <!-- Se llenará dinámicamente -->
+                    </div>
+                </div>
+
+                <div class="form-section">
+                    <h3 class="section-title">Contenido del Feedback</h3>
+                    
+                    <div class="form-group">
+                        <label for="feedbackType">Tipo de Feedback *</label>
+                        <select id="feedbackType" name="feedbackType" required>
+                            <option value="">Selecciona el tipo</option>
+                            <option value="correctivo">🔴 Correctivo (Mejora requerida)</option>
+                            <option value="constructivo">🟡 Constructivo (Oportunidad de mejora)</option>
+                            <option value="positivo">🟢 Positivo (Reconocimiento)</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="feedbackProcess">Proceso *</label>
+                            <select id="feedbackProcess" name="feedbackProcess" required>
+                                <option value="">Seleccionar</option>
+                                <option value="cancelaciones">Cancelaciones</option>
+                                <option value="nu_plus">Nu Plus</option>
+                                <option value="certificados">Certificados</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="additionalSteps">Additional Steps *</label>
+                            <select id="additionalSteps" name="additionalSteps" required>
+                                <option value="">Seleccionar</option>
+                                <option value="na">N/A</option>
+                                <option value="matriz_disciplinaria">Matriz Disciplinaria</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-group full-width">
+                        <label for="feedbackMessage">Mensaje de Retroalimentación *</label>
+                        <textarea id="feedbackMessage" name="feedbackMessage" rows="6" 
+                                  placeholder="Escribe aquí la retroalimentación detallada para el agente. Sé específico y constructivo..." required></textarea>
+                        <small class="form-hint">Incluye ejemplos específicos, impacto del error y recomendaciones de mejora</small>
+                    </div>
+
+                    <div class="form-group full-width">
+                        <label for="actionPlan">Plan de Acción / Compromisos</label>
+                        <textarea id="actionPlan" name="actionPlan" rows="4" 
+                                  placeholder="Define acciones específicas que el agente debe tomar para mejorar (opcional)"></textarea>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="followUpDate">Fecha de Seguimiento</label>
+                            <input type="date" id="followUpDate" name="followUpDate">
+                            <small class="form-hint">Fecha para revisar el progreso del agente</small>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="priority">Prioridad</label>
+                            <select id="priority" name="priority">
+                                <option value="baja">Baja</option>
+                                <option value="media" selected>Media</option>
+                                <option value="alta">Alta</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-section">
+                    <h3 class="section-title">Errores Relacionados (Opcional)</h3>
+                    <p class="section-description">Selecciona las auditorías específicas que motivaron este feedback</p>
+                    
+                    <div id="relatedCallsCheckboxes" class="checkbox-group">
+                        <!-- Se llenará dinámicamente -->
+                    </div>
+                </div>
+
+                <div class="form-actions">
+                    <button type="button" onclick="window.location.href='index.html'" class="btn btn-secondary">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Guardar Feedback</button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Mensaje de éxito -->
+        <div id="successMessage" class="alert alert-success" style="display: none;">
+            <strong>¡Éxito!</strong> El feedback ha sido registrado correctamente.
+        </div>
+
+        <!-- Mensaje de error -->
+        <div id="errorMessage" class="alert alert-error" style="display: none;">
+            <strong>Error:</strong> <span id="errorText"></span>
+        </div>
+    </main>
+
+    <!-- Supabase SDK v2 -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.0/dist/umd/supabase.min.js"></script>
+    <script src="supabase-config.js"></script>
+    <script src="app.js"></script>
+    <script src="registrar-feedback.js"></script>
+</body>
+</html>
+

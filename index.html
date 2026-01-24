@@ -3,228 +3,280 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sistema de Evaluación del Desempeño</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 2rem;
-        }
-        
-        .container {
-            background: white;
-            border-radius: 1rem;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-            max-width: 900px;
-            padding: 3rem;
-        }
-        
-        h1 {
-            color: #667eea;
-            font-size: 2.5rem;
-            margin-bottom: 1rem;
-        }
-        
-        .subtitle {
-            color: #666;
-            font-size: 1.25rem;
-            margin-bottom: 2rem;
-        }
-        
-        .alert {
-            background: #fff3cd;
-            border-left: 4px solid #ffc107;
-            padding: 1rem;
-            margin-bottom: 2rem;
-            border-radius: 0.5rem;
-        }
-        
-        .alert h3 {
-            color: #856404;
-            margin-bottom: 0.5rem;
-        }
-        
-        .features {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 1.5rem;
-            margin: 2rem 0;
-        }
-        
-        .feature {
-            padding: 1.5rem;
-            background: #f8f9fa;
-            border-radius: 0.5rem;
-            border-left: 4px solid #667eea;
-        }
-        
-        .feature h3 {
-            color: #667eea;
-            margin-bottom: 0.5rem;
-        }
-        
-        .btn-group {
-            display: flex;
-            gap: 1rem;
-            margin-top: 2rem;
-            flex-wrap: wrap;
-        }
-        
-        .btn {
-            padding: 1rem 2rem;
-            border-radius: 0.5rem;
-            text-decoration: none;
-            font-weight: 600;
-            transition: all 0.3s;
-            display: inline-block;
-        }
-        
-        .btn-primary {
-            background: #667eea;
-            color: white;
-        }
-        
-        .btn-primary:hover {
-            background: #5568d3;
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
-        }
-        
-        .btn-secondary {
-            background: white;
-            color: #667eea;
-            border: 2px solid #667eea;
-        }
-        
-        .btn-secondary:hover {
-            background: #667eea;
-            color: white;
-            transform: translateY(-2px);
-        }
-        
-        .instructions {
-            background: #e7f3ff;
-            padding: 1.5rem;
-            border-radius: 0.5rem;
-            margin-top: 2rem;
-        }
-        
-        .instructions h3 {
-            color: #004085;
-            margin-bottom: 1rem;
-        }
-        
-        code {
-            background: #2d2d2d;
-            color: #f8f8f2;
-            padding: 0.2rem 0.5rem;
-            border-radius: 0.25rem;
-            font-family: 'Courier New', monospace;
-        }
-        
-        pre {
-            background: #2d2d2d;
-            color: #f8f8f2;
-            padding: 1rem;
-            border-radius: 0.5rem;
-            overflow-x: auto;
-            margin: 1rem 0;
-        }
-        
-        ul {
-            margin-left: 1.5rem;
-            margin-top: 0.5rem;
-        }
-        
-        li {
-            margin: 0.5rem 0;
-        }
-    </style>
+    <title>Sistema de Evaluación del Desempeño - Dashboard</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
-    <div class="container">
-        <h1>📊 Sistema de Evaluación del Desempeño</h1>
-        <p class="subtitle">Auditoría automatizada de llamadas con análisis de impacto de feedbacks</p>
-        
-        <div class="alert">
-            <h3>⚠️ Nota Importante</h3>
-            <p>Este sistema requiere un <strong>servidor backend (FastAPI)</strong> para funcionar completamente. Esta página de GitHub solo muestra la documentación del proyecto.</p>
-        </div>
-        
-        <div class="features">
-            <div class="feature">
-                <h3>✅ Auditorías</h3>
-                <p>Registro completo de llamadas con clasificación por criticidad y TNPS</p>
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="nav-brand">
+                <h1>📊 Sistema de Evaluación</h1>
             </div>
-            <div class="feature">
-                <h3>💬 Feedbacks</h3>
-                <p>Gestión estructurada con análisis automático de impacto</p>
-            </div>
-            <div class="feature">
-                <h3>📈 Análisis</h3>
-                <p>Dashboard con métricas y desempeño individual por agente</p>
-            </div>
-        </div>
-        
-        <div class="btn-group">
-            <a href="README.md" class="btn btn-primary">📚 Ver Documentación Completa</a>
-            <a href="https://github.com/YOUR_USERNAME/YOUR_REPO" class="btn btn-secondary" target="_blank">💻 Ver Código en GitHub</a>
-        </div>
-        
-        <div class="instructions">
-            <h3>🚀 Cómo Ejecutar el Sistema</h3>
-            <p><strong>Para usar el sistema completo en tu computadora:</strong></p>
-            
-            <pre><code># 1. Clonar el repositorio
-git clone https://github.com/YOUR_USERNAME/YOUR_REPO.git
-cd YOUR_REPO
-
-# 2. Crear entorno virtual
-python3 -m venv venv
-source venv/bin/activate  # Windows: venv\Scripts\activate
-
-# 3. Instalar dependencias
-pip install -r requirements.txt
-
-# 4. Inicializar con datos de ejemplo
-python init_sample_data.py
-
-# 5. Iniciar servidor
-python main.py
-
-# Visita: http://localhost:8000</code></pre>
-            
-            <p style="margin-top: 1rem;"><strong>O simplemente usa el script automático:</strong></p>
-            <pre><code>./start_server.sh</code></pre>
-        </div>
-        
-        <div style="margin-top: 2rem; padding-top: 2rem; border-top: 2px solid #eee;">
-            <h3 style="color: #667eea; margin-bottom: 1rem;">📖 Documentación Disponible</h3>
-            <ul>
-                <li><a href="README_PERFORMANCE_SYSTEM.md" style="color: #667eea;">Documentación Técnica Completa</a></li>
-                <li><a href="GUIA_RAPIDA.md" style="color: #667eea;">Guía Rápida de Uso</a></li>
-                <li><a href="RESUMEN_SISTEMA.md" style="color: #667eea;">Resumen del Sistema</a></li>
-                <li><a href="PRODUCCION_DEPLOYMENT.md" style="color: #667eea;">Guía de Despliegue a Producción</a></li>
-                <li><a href="INSTRUCCIONES_GITHUB.md" style="color: #667eea;">Instrucciones para GitHub</a></li>
+            <ul class="nav-menu">
+                <li><a href="index.html" class="active">Dashboard</a></li>
+                <li><a href="detalle-auditorias.html">Detalle de Auditorías</a></li>
+                <li><a href="detalle-feedbacks.html">Detalle de Feedbacks</a></li>
+                <li><a href="analisis-avanzado.html">Análisis Avanzado</a></li>
+                <li><a href="agentes.html">Gestión de Agentes</a></li>
+                <li><a href="sj-pendientes.html">SJ Pendientes</a></li>
             </ul>
         </div>
-        
-        <div style="margin-top: 2rem; padding: 1rem; background: #f8f9fa; border-radius: 0.5rem; text-align: center;">
-            <p style="color: #666;">
-                <strong>Stack Tecnológico:</strong> FastAPI • SQLAlchemy • Python • HTML5 • CSS3 • JavaScript
-            </p>
+    </nav>
+
+    <main class="container">
+        <header class="page-header">
+            <h2>Dashboard de Desempeño</h2>
+            <div class="date-filter">
+                <label for="dateFrom">Desde:</label>
+                <input type="date" id="dateFrom">
+                <label for="dateTo">Hasta:</label>
+                <input type="date" id="dateTo">
+                <button onclick="filterByDate()" class="btn btn-primary">Filtrar</button>
+            </div>
+        </header>
+
+        <!-- Tarjetas de métricas principales -->
+        <div class="metrics-grid">
+            <div class="metric-card">
+                <div class="metric-icon" style="background: #e3f2fd;">📞</div>
+                <div class="metric-info">
+                    <h3>Total Llamadas Auditadas</h3>
+                    <p class="metric-value" id="totalCalls">0</p>
+                    <span class="metric-subtitle">En el período seleccionado</span>
+                </div>
+            </div>
+
+            <div class="metric-card">
+                <div class="metric-icon" style="background: #fee2e2;">⚠️</div>
+                <div class="metric-info">
+                    <h3>Errores Críticos y Altos</h3>
+                    <p class="metric-value" id="criticalErrors">0</p>
+                    <span class="metric-subtitle">Requieren atención prioritaria</span>
+                </div>
+            </div>
+
+            <div class="metric-card">
+                <div class="metric-icon" style="background: #e8f5e9;">💬</div>
+                <div class="metric-info">
+                    <h3>Feedbacks Entregados</h3>
+                    <p class="metric-value" id="totalFeedbacks">0</p>
+                    <span class="metric-subtitle">A agentes</span>
+                </div>
+            </div>
+
+            <div class="metric-card">
+                <div class="metric-icon" style="background: #f3e5f5;">⭐</div>
+                <div class="metric-info">
+                    <h3>Agentes Activos</h3>
+                    <p class="metric-value" id="activeAgents">0</p>
+                    <span class="metric-subtitle">Registrados en el sistema</span>
+                </div>
+            </div>
         </div>
-    </div>
+
+        <!-- Distribución TNPS -->
+        <div class="section-grid">
+            <div class="card">
+                <div class="card-header">
+                    <h3>Distribución TNPS</h3>
+                </div>
+                <div class="card-body">
+                    <div class="tnps-container">
+                        <div class="tnps-item promoter">
+                            <div class="tnps-bar">
+                                <div class="tnps-fill" id="promoterBar" style="width: 0%"></div>
+                            </div>
+                            <div class="tnps-label">
+                                <span class="tnps-emoji"><span class="circle-indicator green"></span></span>
+                                <span class="tnps-name">Promotores</span>
+                                <span class="tnps-value" id="promoterCount">0</span>
+                            </div>
+                        </div>
+                        <div class="tnps-item neutral">
+                            <div class="tnps-bar">
+                                <div class="tnps-fill" id="neutralBar" style="width: 0%"></div>
+                            </div>
+                            <div class="tnps-label">
+                                <span class="tnps-emoji"><span class="circle-indicator yellow"></span></span>
+                                <span class="tnps-name">Neutrales</span>
+                                <span class="tnps-value" id="neutralCount">0</span>
+                            </div>
+                        </div>
+                        <div class="tnps-item detractor">
+                            <div class="tnps-bar">
+                                <div class="tnps-fill" id="detractorBar" style="width: 0%"></div>
+                            </div>
+                            <div class="tnps-label">
+                                <span class="tnps-emoji"><span class="circle-indicator red"></span></span>
+                                <span class="tnps-name">Detractores</span>
+                                <span class="tnps-value" id="detractorCount">0</span>
+                            </div>
+                        </div>
+                        <div class="tnps-item null">
+                            <div class="tnps-bar">
+                                <div class="tnps-fill" id="nullBar" style="width: 0%"></div>
+                            </div>
+                            <div class="tnps-label">
+                                <span class="tnps-emoji"><span class="circle-indicator gray"></span></span>
+                                <span class="tnps-name">Sin respuesta</span>
+                                <span class="tnps-value" id="nullCount">0</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <h3>Distribución por Criticidad</h3>
+                </div>
+                <div class="card-body">
+                    <div class="criticality-chart">
+                        <div class="criticality-item">
+                            <div class="criticality-label">
+                                <span class="badge badge-critico">Crítico</span>
+                                <span id="criticalityCritical">0</span>
+                            </div>
+                            <div class="criticality-bar">
+                                <div class="criticality-fill critical" id="criticalityCriticalBar"></div>
+                            </div>
+                        </div>
+                        <div class="criticality-item">
+                            <div class="criticality-label">
+                                <span class="badge badge-alto">Alto</span>
+                                <span id="criticalityHigh">0</span>
+                            </div>
+                            <div class="criticality-bar">
+                                <div class="criticality-fill high" id="criticalityHighBar"></div>
+                            </div>
+                        </div>
+                        <div class="criticality-item">
+                            <div class="criticality-label">
+                                <span class="badge badge-medio">Medio</span>
+                                <span id="criticalityMedium">0</span>
+                            </div>
+                            <div class="criticality-bar">
+                                <div class="criticality-fill medium" id="criticalityMediumBar"></div>
+                            </div>
+                        </div>
+                        <div class="criticality-item">
+                            <div class="criticality-label">
+                                <span class="badge badge-perfecto">Perfecto</span>
+                                <span id="criticalityPerfect">0</span>
+                            </div>
+                            <div class="criticality-bar">
+                                <div class="criticality-fill perfect" id="criticalityPerfectBar"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Top agentes -->
+        <div class="card">
+            <div class="card-header">
+                <h3>Ranking de Agentes por Desempeño</h3>
+                <button onclick="exportToCSV()" class="btn btn-secondary">Exportar CSV</button>
+            </div>
+            <div class="card-body">
+                <div class="table-container">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Agente</th>
+                                <th>Llamadas Auditadas</th>
+                                <th>Errores</th>
+                                <th>Tasa de Error</th>
+                                <th>TNPS Promedio</th>
+                                <th>Últimos Feedbacks</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="agentsTableBody">
+                            <tr>
+                                <td colspan="8" class="no-data">No hay datos disponibles. Comienza registrando auditorías.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Llamadas recientes -->
+        <div class="card">
+            <div class="card-header">
+                <h3>Auditorías Recientes</h3>
+                <a href="registrar-llamada.html" class="btn btn-primary">+ Nueva Auditoría</a>
+            </div>
+            <div class="card-body">
+                <div class="table-container">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Fecha</th>
+                                <th>Customer ID</th>
+                                <th>Agente</th>
+                                <th>Auditor</th>
+                                <th>Motivo</th>
+                                <th>BPO</th>
+                                <th>Criticidad</th>
+                                <th>Error</th>
+                                <th>TNPS</th>
+                                <th>Enlace PV</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="recentCallsTableBody">
+                            <tr>
+                                <td colspan="11" class="no-data">No hay auditorías registradas</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Feedbacks recientes -->
+        <div class="card">
+            <div class="card-header">
+                <h3>Feedbacks Recientes</h3>
+                <a href="registrar-feedback.html" class="btn btn-primary">+ Nuevo Feedback</a>
+            </div>
+            <div class="card-body">
+                <div class="table-container">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Fecha</th>
+                                <th>Agente</th>
+                                <th>Dado Por</th>
+                                <th>Tipo</th>
+                                <th>Proceso</th>
+                                <th>Additional Steps</th>
+                                <th>Prioridad</th>
+                                <th>Mensaje</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="recentFeedbacksTableBody">
+                            <tr>
+                                <td colspan="9" class="no-data">No hay feedbacks registrados</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Supabase SDK v2 -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.0/dist/umd/supabase.min.js"></script>
+    <script src="supabase-config.js"></script>
+    <script src="app.js"></script>
+    <script src="dashboard.js"></script>
 </body>
 </html>
 

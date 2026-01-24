@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registrar Auditoría - Sistema de Evaluación</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="nav-brand">
+                <h1>📊 Sistema de Evaluación</h1>
+            </div>
+            <ul class="nav-menu">
+                <li><a href="index.html">Dashboard</a></li>
+                <li><a href="detalle-auditorias.html">Detalle de Auditorías</a></li>
+                <li><a href="detalle-feedbacks.html">Detalle de Feedbacks</a></li>
+                <li><a href="analisis-avanzado.html">Análisis Avanzado</a></li>
+                <li><a href="agentes.html">Gestión de Agentes</a></li>
+                <li><a href="sj-pendientes.html">SJ Pendientes</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <main class="container">
+        <header class="page-header">
+            <h2>Registrar Nueva Auditoría de Llamada</h2>
+            <p class="subtitle">Completa la información de la llamada auditada</p>
+        </header>
+
+        <div class="form-card">
+            <form id="auditForm" class="audit-form">
+                <div class="form-section">
+                    <h3 class="section-title">Información General</h3>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="callDate">Fecha de la Llamada *</label>
+                            <input type="date" id="callDate" name="callDate" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="customerId">Customer ID *</label>
+                            <input type="text" id="customerId" name="customerId" placeholder="Ej: CUST-12345" required>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="callType">Razón de Contacto *</label>
+                            <select id="callType" name="callType" onchange="updateCancellationReasons()" required>
+                                <option value="">Selecciona una razón</option>
+                                <option value="cancelacion_cuenta_ahorros">Cancelación Cuenta de Ahorros</option>
+                                <option value="cancelacion_tarjeta_credito">Cancelación Tarjeta de Crédito</option>
+                                <option value="cancelacion_multiproducto">Cancelación Multiproducto</option>
+                                <option value="nu_plus">Nu Plus</option>
+                                <option value="certificados">Certificados</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group" id="cancellationReasonGroup" style="display: none;">
+                            <label for="cancellationReason">Motivo *</label>
+                            <select id="cancellationReason" name="cancellationReason">
+                                <option value="">Selecciona un motivo</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="auditDate">Fecha de Auditoría *</label>
+                            <input type="date" id="auditDate" name="auditDate" required>
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="enlacePv">Enlace PV *</label>
+                            <input type="url" id="enlacePv" name="enlacePv" placeholder="https://..." required>
+                            <small class="form-hint">URL del enlace PV de la llamada</small>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="bpo">BPO *</label>
+                            <select id="bpo" name="bpo" required>
+                                <option value="">Selecciona BPO</option>
+                                <option value="teleperformance">Teleperformance</option>
+                                <option value="konecta">Konecta</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-section">
+                    <h3 class="section-title">Personal Involucrado</h3>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="agentId">Agente que Atendió *</label>
+                            <select id="agentId" name="agentId" required>
+                                <option value="">Selecciona un agente</option>
+                            </select>
+                            <small class="form-hint">Si no encuentras el agente, agrégalo en <a href="agentes.html">Gestión de Agentes</a></small>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="auditor">Auditor *</label>
+                            <select id="auditor" name="auditor" required>
+                                <option value="">Selecciona un auditor</option>
+                                <option value="Andrés Gayón">Andrés Gayón</option>
+                                <option value="Daniel Aristizabal">Daniel Aristizabal</option>
+                                <option value="Daniel Rodríguez">Daniel Rodríguez</option>
+                                <option value="Nicolás González">Nicolás González</option>
+                                <option value="Paula Morales">Paula Morales</option>
+                                <option value="Valentina Claros">Valentina Claros</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-section">
+                    <h3 class="section-title">Evaluación de la Llamada</h3>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="criticality">Nivel de Criticidad *</label>
+                            <select id="criticality" name="criticality" required>
+                                <option value="">Selecciona nivel</option>
+                                <option value="critico">🔴 Crítico</option>
+                                <option value="alto">🟠 Alto</option>
+                                <option value="medio">🟡 Medio</option>
+                                <option value="perfecto">🟢 Perfecto</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="tnps">Calificación TNPS *</label>
+                            <select id="tnps" name="tnps" required>
+                                <option value="">Selecciona calificación</option>
+                                <option value="promoter">🟢 Promoter (9-10)</option>
+                                <option value="neutral">🟡 Neutral (7-8)</option>
+                                <option value="detractor">🔴 Detractor (0-6)</option>
+                                <option value="null">⚪ Sin respuesta</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-group full-width">
+                        <label>Errores del Agente *</label>
+                        <p class="form-hint" id="errorHint">Primero selecciona un motivo de cancelación para ver las opciones de errores</p>
+                        
+                        <!-- Contenedor de errores que cambia dinámicamente -->
+                        <div id="errorsContainer" style="display: none;">
+                            
+                            <!-- Errores para Cuenta de Ahorros -->
+                            <div id="errorsCuentaAhorros" class="errors-section" style="display: none;">
+                                <h4 class="errors-section-title">Cuenta de Ahorros</h4>
+                                <div class="checkbox-errors-group">
+                                    <label class="checkbox-error-item"><input type="checkbox" name="error" value="No se validaron Tags"> No se validaron Tags</label>
+                                    <label class="checkbox-error-item"><input type="checkbox" name="error" value="No se revisó el estado del producto en la herramienta"> No se revisó el estado del producto en la herramienta</label>
+                                    <label class="checkbox-error-item"><input type="checkbox" name="error" value="No se realizó HF"> No se realizó HF</label>
+                                    <label class="checkbox-error-item"><input type="checkbox" name="error" value="No se indagó en el motivo de cancelación"> No se indagó en el motivo de cancelación</label>
+                                    <label class="checkbox-error-item"><input type="checkbox" name="error" value="No se leyeron beneficios"> No se leyeron beneficios</label>
+                                    <label class="checkbox-error-item"><input type="checkbox" name="error" value="No se validó si el cliente tiene CDT activo"> No se validó si el cliente tiene CDT activo</label>
+                                    <label class="checkbox-error-item"><input type="checkbox" name="error" value="No se hizo retención"> No se hizo retención</label>
+                                    <label class="checkbox-error-item"><input type="checkbox" name="error" value="No se validó el producto (saldo en cajita, saldos mayores a $0,99, préstamo activo, etc.)"> No se validó el producto (saldo en cajita, saldos mayores a $0,99, préstamo activo, etc.)</label>
+                                    <label class="checkbox-error-item"><input type="checkbox" name="error" value="No se solicitó aproximación de saldo"> No se solicitó aproximación de saldo</label>
+                                    <label class="checkbox-error-item"><input type="checkbox" name="error" value="No se leyeron condiciones de cancelación"> No se leyeron condiciones de cancelación</label>
+                                    <label class="checkbox-error-item"><input type="checkbox" name="error" value="No se cancelaron las tarjetas (físicas/virtuales)"> No se cancelaron las tarjetas (físicas/virtuales)</label>
+                                    <label class="checkbox-error-item"><input type="checkbox" name="error" value="No se escaló Secundary Job"> No se escaló Secundary Job</label>
+                                    <label class="checkbox-error-item"><input type="checkbox" name="error" value="No se confirmó la gestión realizada"> No se confirmó la gestión realizada</label>
+                                    <label class="checkbox-error-item"><input type="checkbox" name="error" value="Se dan tiempos de cancelación incorrectos"> Se dan tiempos de cancelación incorrectos</label>
+                                    <label class="checkbox-error-item"><input type="checkbox" name="error" value="No se promueve case management"> No se promueve case management</label>
+                                    <label class="checkbox-error-item"><input type="checkbox" name="error" value="No se promueve encuesta"> No se promueve encuesta</label>
+                                </div>
+                            </div>
+                            
+                            <!-- Errores para Tarjeta de Crédito -->
+                            <div id="errorsTarjetaCredito" class="errors-section" style="display: none;">
+                                <h4 class="errors-section-title">Tarjeta de Crédito</h4>
+                                <div class="checkbox-errors-group">
+                                    <label class="checkbox-error-item"><input type="checkbox" name="error" value="TC: No se validaron Tags"> No se validaron Tags</label>
+                                    <label class="checkbox-error-item"><input type="checkbox" name="error" value="TC: No se revisó el estado del producto en la herramienta"> No se revisó el estado del producto en la herramienta</label>
+                                    <label class="checkbox-error-item"><input type="checkbox" name="error" value="TC: No se realizó HF"> No se realizó HF</label>
+                                    <label class="checkbox-error-item"><input type="checkbox" name="error" value="TC: No se indagó en el motivo de cancelación"> No se indagó en el motivo de cancelación</label>
+                                    <label class="checkbox-error-item"><input type="checkbox" name="error" value="TC: No se leyeron beneficios"> No se leyeron beneficios</label>
+                                    <label class="checkbox-error-item"><input type="checkbox" name="error" value="TC: No se validó el tipo de tarjeta de crédito que tenía el cliente"> No se validó el tipo de tarjeta de crédito que tenía el cliente</label>
+                                    <label class="checkbox-error-item"><input type="checkbox" name="error" value="TC: No se hizo retención"> No se hizo retención</label>
+                                    <label class="checkbox-error-item"><input type="checkbox" name="error" value="TC: No se validó el producto (deuda activa, saldo a favor, compras en proceso, complaints activos, etc.)"> No se validó el producto (deuda activa, saldo a favor, compras en proceso, complaints activos, etc.)</label>
+                                    <label class="checkbox-error-item"><input type="checkbox" name="error" value="TC: No se leyeron condiciones de cancelación"> No se leyeron condiciones de cancelación</label>
+                                    <label class="checkbox-error-item"><input type="checkbox" name="error" value="TC: No se cancelaron las tarjetas (físicas/virtuales)"> No se cancelaron las tarjetas (físicas/virtuales)</label>
+                                    <label class="checkbox-error-item"><input type="checkbox" name="error" value="TC: No se escaló Secundary Job"> No se escaló Secundary Job</label>
+                                    <label class="checkbox-error-item"><input type="checkbox" name="error" value="TC: No se confirmó la gestión realizada"> No se confirmó la gestión realizada</label>
+                                    <label class="checkbox-error-item"><input type="checkbox" name="error" value="TC: Se dan tiempos de cancelación incorrectos"> Se dan tiempos de cancelación incorrectos</label>
+                                    <label class="checkbox-error-item"><input type="checkbox" name="error" value="TC: No se promueve case management"> No se promueve case management</label>
+                                    <label class="checkbox-error-item"><input type="checkbox" name="error" value="TC: No se promueve encuesta"> No se promueve encuesta</label>
+                                </div>
+                            </div>
+                            
+                            <!-- Errores para Nu Plus -->
+                            <div id="errorsNuPlus" class="errors-section" style="display: none;">
+                                <h4 class="errors-section-title">Nu Plus</h4>
+                                <div class="checkbox-errors-group">
+                                    <label class="checkbox-error-item"><input type="checkbox" name="error" value="Nu Plus: No sabe qué es ni cómo funciona el programa"> No sabe qué es ni cómo funciona el programa</label>
+                                    <label class="checkbox-error-item"><input type="checkbox" name="error" value="Nu Plus: No valida la herramienta ni pide apoyo para validar información"> No valida la herramienta ni pide apoyo para validar información</label>
+                                    <label class="checkbox-error-item"><input type="checkbox" name="error" value="Nu Plus: Sube Secundary Job innecesario"> Sube Secundary Job innecesario</label>
+                                    <label class="checkbox-error-item"><input type="checkbox" name="error" value="Nu Plus: No sabe diferenciar entre las compras que suman puntos y las que no"> No sabe diferenciar entre las compras que suman puntos y las que no</label>
+                                    <label class="checkbox-error-item"><input type="checkbox" name="error" value="Nu Plus: No diferencia a que grupo pertenece el cliente (CC only, Savings, Multiproduct)"> No diferencia a que grupo pertenece el cliente (CC only, Savings, Multiproduct)</label>
+                                    <label class="checkbox-error-item"><input type="checkbox" name="error" value="Nu Plus: Skipea el job cuando debe atenderlo"> Skipea el job cuando debe atenderlo</label>
+                                </div>
+                            </div>
+                            
+                            <!-- Errores para Certificados -->
+                            <div id="errorsCertificados" class="errors-section" style="display: none;">
+                                <h4 class="errors-section-title">Certificados</h4>
+                                <div class="checkbox-errors-group">
+                                    <label class="checkbox-error-item"><input type="checkbox" name="error" value="Certificados: Certificado no es manejado por CM"> Certificado no es manejado por CM</label>
+                                    <label class="checkbox-error-item"><input type="checkbox" name="error" value="Certificados: Certificado escalado por la fila errónea"> Certificado escalado por la fila errónea</label>
+                                    <label class="checkbox-error-item"><input type="checkbox" name="error" value="Certificados: Certificado puede descargarse por la App"> Certificado puede descargarse por la App</label>
+                                    <label class="checkbox-error-item"><input type="checkbox" name="error" value="Certificados: Agente no tiene conocimiento de los certificados que se emiten en CM"> Agente no tiene conocimiento de los certificados que se emiten en CM</label>
+                                    <label class="checkbox-error-item"><input type="checkbox" name="error" value="Certificados: No se pregunta información del certificado antes de escalar SJ"> No se pregunta información del certificado antes de escalar SJ</label>
+                                    <label class="checkbox-error-item"><input type="checkbox" name="error" value="Certificados: Agente da tiempos de envío de certificado incorrectos"> Agente da tiempos de envío de certificado incorrectos</label>
+                                    <label class="checkbox-error-item"><input type="checkbox" name="error" value="Certificados: Agente da información errónea de certificados (moneda, idioma, información)"> Agente da información errónea de certificados (moneda, idioma, información)</label>
+                                </div>
+                            </div>
+                            
+                        </div>
+                    </div>
+
+                    <!-- Nueva Sección: Métricas Operativas -->
+                    <div class="form-section">
+                        <h3 class="section-title">Métricas Operativas</h3>
+                        
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="callDuration">Duración de la Llamada (minutos) *</label>
+                                <input type="number" id="callDuration" name="callDuration" min="0" step="0.1" placeholder="Ej: 5.5" required>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="transferAttempt">¿El agente intentó transferir la llamada?</label>
+                                <select id="transferAttempt" name="transferAttempt" required>
+                                    <option value="">Selecciona una opción</option>
+                                    <option value="no">No</option>
+                                    <option value="si">Sí</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="excessiveHold">¿Hubo tiempos de espera > 2 minutos?</label>
+                                <select id="excessiveHold" name="excessiveHold" onchange="toggleHoldTimeInput()" required>
+                                    <option value="">Selecciona una opción</option>
+                                    <option value="no">No</option>
+                                    <option value="si">Sí</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group" id="holdTimeGroup" style="display: none;">
+                                <label for="holdTime">Especifica el tiempo de espera (minutos)</label>
+                                <input type="number" id="holdTime" name="holdTime" min="0" step="0.1" placeholder="Ej: 3.5">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group full-width">
+                        <label for="callNotes">Notas Adicionales</label>
+                        <textarea id="callNotes" name="callNotes" rows="3" 
+                                  placeholder="Información adicional sobre la llamada (opcional)"></textarea>
+                    </div>
+                </div>
+
+                <div class="form-actions">
+                    <button type="button" onclick="window.location.href='index.html'" class="btn btn-secondary">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Guardar Auditoría</button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Mensaje de éxito -->
+        <div id="successMessage" class="alert alert-success" style="display: none;">
+            <strong>¡Éxito!</strong> La auditoría ha sido registrada correctamente.
+        </div>
+
+        <!-- Mensaje de error -->
+        <div id="errorMessage" class="alert alert-error" style="display: none;">
+            <strong>Error:</strong> <span id="errorText"></span>
+        </div>
+    </main>
+
+    <!-- Supabase SDK v2 -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.0/dist/umd/supabase.min.js"></script>
+    <script src="supabase-config.js"></script>
+    <script src="app.js"></script>
+    <script src="registrar-llamada.js"></script>
+</body>
+</html>
+

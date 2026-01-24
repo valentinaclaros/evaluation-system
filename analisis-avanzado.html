@@ -1,0 +1,749 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Análisis Avanzado - Sistema de Evaluación</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <style>
+        .analysis-tabs {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 2rem;
+            border-bottom: 2px solid var(--border-color);
+            flex-wrap: wrap;
+        }
+        
+        .analysis-tab {
+            padding: 1rem 1.5rem;
+            background: none;
+            border: none;
+            border-bottom: 3px solid transparent;
+            font-family: inherit;
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: var(--transition);
+            margin-bottom: -2px;
+        }
+        
+        .analysis-tab:hover {
+            color: var(--text-primary);
+            background: var(--bg-tertiary);
+        }
+        
+        .analysis-tab.active {
+            color: var(--primary-color);
+            border-bottom-color: var(--primary-color);
+        }
+        
+        .analysis-section {
+            display: none;
+        }
+        
+        .analysis-section.active {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .chart-container {
+            position: relative;
+            height: 400px;
+            margin: 1.5rem 0;
+        }
+        
+        .chart-small {
+            height: 300px;
+        }
+        
+        .insight-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 1.5rem;
+            border-radius: var(--border-radius);
+            color: white;
+            margin-bottom: 1.5rem;
+        }
+        
+        .insight-card h4 {
+            margin-bottom: 0.75rem;
+            font-size: 1.1rem;
+        }
+        
+        .insight-card p {
+            line-height: 1.6;
+            opacity: 0.95;
+        }
+        
+        .kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+        
+        .kpi-card {
+            background: var(--bg-primary);
+            padding: 1.5rem;
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow-sm);
+            text-align: center;
+            border-left: 4px solid var(--primary-color);
+        }
+        
+        .kpi-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--primary-color);
+            margin-bottom: 0.5rem;
+        }
+        
+        .kpi-label {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+        
+        .kpi-card.warning {
+            border-left-color: var(--warning-color);
+        }
+        
+        .kpi-card.warning .kpi-value {
+            color: var(--warning-color);
+        }
+        
+        .kpi-card.success {
+            border-left-color: var(--success-color);
+        }
+        
+        .kpi-card.success .kpi-value {
+            color: var(--success-color);
+        }
+        
+        .kpi-card.error {
+            border-left-color: var(--error-color);
+        }
+        
+        .kpi-card.error .kpi-value {
+            color: var(--error-color);
+        }
+        
+        .error-ranking {
+            list-style: none;
+            padding: 0;
+        }
+        
+        .error-ranking-item {
+            display: flex;
+            align-items: center;
+            padding: 1rem;
+            margin-bottom: 0.75rem;
+            background: var(--bg-tertiary);
+            border-radius: var(--border-radius-sm);
+            gap: 1rem;
+        }
+        
+        .error-rank {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--primary-color);
+            min-width: 40px;
+        }
+        
+        .error-name {
+            flex: 1;
+            font-size: 0.95rem;
+            color: var(--text-primary);
+        }
+        
+        .error-count {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--error-color);
+            min-width: 60px;
+            text-align: right;
+        }
+        
+        .error-bar {
+            flex: 0 0 150px;
+            height: 20px;
+            background: var(--bg-secondary);
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        
+        .error-bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--error-color), var(--warning-color));
+            transition: width 0.6s ease;
+        }
+        
+        .correlation-matrix {
+            overflow-x: auto;
+        }
+        
+        .matrix-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.85rem;
+        }
+        
+        .matrix-table th,
+        .matrix-table td {
+            padding: 0.75rem;
+            text-align: center;
+            border: 1px solid var(--border-color);
+        }
+        
+        .matrix-table th {
+            background: var(--bg-tertiary);
+            font-weight: 600;
+        }
+        
+        .matrix-cell {
+            font-weight: 700;
+        }
+        
+        .matrix-cell.high {
+            background: #fee2e2;
+            color: #dc2626;
+        }
+        
+        .matrix-cell.medium {
+            background: #fef3c7;
+            color: #d97706;
+        }
+        
+        .matrix-cell.low {
+            background: #d1fae5;
+            color: #059669;
+        }
+        
+        .alert-box {
+            padding: 1rem 1.5rem;
+            border-radius: var(--border-radius);
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        
+        .alert-box.critical {
+            background: #fee2e2;
+            border-left: 4px solid var(--error-color);
+        }
+        
+        .alert-box.warning {
+            background: #fef3c7;
+            border-left: 4px solid var(--warning-color);
+        }
+        
+        .alert-box.info {
+            background: #dbeafe;
+            border-left: 4px solid var(--info-color);
+        }
+        
+        .alert-icon {
+            font-size: 2rem;
+        }
+        
+        .alert-content {
+            flex: 1;
+        }
+        
+        .alert-title {
+            font-weight: 700;
+            margin-bottom: 0.25rem;
+        }
+        
+        .alert-message {
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="nav-brand">
+                <h1>📊 Sistema de Evaluación</h1>
+            </div>
+            <ul class="nav-menu">
+                <li><a href="index.html">Dashboard</a></li>
+                <li><a href="detalle-auditorias.html">Detalle de Auditorías</a></li>
+                <li><a href="detalle-feedbacks.html">Detalle de Feedbacks</a></li>
+                <li><a href="analisis-avanzado.html" class="active">Análisis Avanzado</a></li>
+                <li><a href="agentes.html">Gestión de Agentes</a></li>
+                <li><a href="sj-pendientes.html">SJ Pendientes</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <main class="container">
+        <header class="page-header">
+            <h2>📊 Análisis Avanzado de Desempeño</h2>
+            <p class="subtitle">Insights profundos y métricas predictivas (Datos desde el 1 de enero de 2026)</p>
+        </header>
+
+        <!-- Tabs de análisis -->
+        <div class="analysis-tabs">
+            <button class="analysis-tab active" onclick="switchAnalysisTab('executive')">
+                📊 Executive Overview
+            </button>
+            <button class="analysis-tab" onclick="switchAnalysisTab('coaching')">
+                🎯 Coaching & Enablement
+            </button>
+            <button class="analysis-tab" onclick="switchAnalysisTab('metricas')">
+                📈 Métricas y KPIs
+            </button>
+            <button class="analysis-tab" onclick="switchAnalysisTab('insights')">
+                💡 Insights por Agente
+            </button>
+            <button class="analysis-tab" onclick="switchAnalysisTab('mejoras')">
+                📋 Análisis de Mejoras
+            </button>
+        </div>
+
+        <!-- SECCIÓN 1: Executive Overview -->
+        <div id="section-executive" class="analysis-section active">
+            <div class="insight-card">
+                <h4>📊 Executive Summary</h4>
+                <p id="executiveInsight">Cargando resumen ejecutivo...</p>
+            </div>
+
+            <!-- Scorecard del Mes -->
+            <div class="card">
+                <div class="card-header">
+                    <h3>Scorecard del Mes - Global</h3>
+                </div>
+                <div class="card-body">
+                    <div class="kpi-grid">
+                        <div class="kpi-card">
+                            <div class="kpi-value" id="globalQAScore">0</div>
+                            <div class="kpi-label">QA Score Global</div>
+                        </div>
+                        <div class="kpi-card success">
+                            <div class="kpi-value" id="globalPassRate">0%</div>
+                            <div class="kpi-label">Quality Pass Rate</div>
+                        </div>
+                        <div class="kpi-card error">
+                            <div class="kpi-value" id="globalCriticalRate">0%</div>
+                            <div class="kpi-label">Critical Error Rate</div>
+                        </div>
+                        <div class="kpi-card">
+                            <div class="kpi-value" id="globalDefectDensity">0</div>
+                            <div class="kpi-label">Defect Density (DPL)</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Scorecard por BPO -->
+            <div class="section-grid">
+                <div class="card">
+                    <div class="card-header">
+                        <h3>Teleperformance - Scorecard</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="kpi-grid">
+                            <div class="kpi-card">
+                                <div class="kpi-value" id="tpQAScore">0</div>
+                                <div class="kpi-label">QA Score</div>
+                            </div>
+                            <div class="kpi-card">
+                                <div class="kpi-value" id="tpPassRate">0%</div>
+                                <div class="kpi-label">Pass Rate</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <h3>Konecta - Scorecard</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="kpi-grid">
+                            <div class="kpi-card">
+                                <div class="kpi-value" id="konectaQAScore">0</div>
+                                <div class="kpi-label">QA Score</div>
+                            </div>
+                            <div class="kpi-card">
+                                <div class="kpi-value" id="konectaPassRate">0%</div>
+                                <div class="kpi-label">Pass Rate</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Distribución de Criticidad vs Tasa de Llamadas -->
+            <div class="card">
+                <div class="card-header">
+                    <h3>Distribución de Criticidad x Tasa de Llamadas</h3>
+                </div>
+                <div class="card-body">
+                    <div class="chart-container">
+                        <canvas id="criticalityDistributionChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tendencias Semanales -->
+            <div class="section-grid">
+                <div class="card">
+                    <div class="card-header">
+                        <h3>Tendencias Semanales</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="chart-container chart-small">
+                            <canvas id="weeklyTrendsChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <h3>Control Chart - Errores Críticos</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="chart-container chart-small">
+                            <canvas id="controlChartCritical"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Gap Analysis por BPO -->
+            <div class="card">
+                <div class="card-header">
+                    <h3>Gap Analysis - BPO vs Benchmark</h3>
+                </div>
+                <div class="card-body">
+                    <div class="chart-container">
+                        <canvas id="gapAnalysisChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Heatmap por Agente -->
+            <div class="card">
+                <div class="card-header">
+                    <h3>Heatmap de Desempeño por Agente</h3>
+                </div>
+                <div class="card-body">
+                    <div id="performanceHeatmap"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SECCIÓN 2: Coaching & Enablement -->
+        <div id="section-coaching" class="analysis-section">
+            <div class="insight-card" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                <h4>🎯 Insights de Coaching</h4>
+                <p id="coachingInsight">Cargando análisis de coaching...</p>
+            </div>
+
+            <!-- KPIs de Coaching -->
+            <div class="kpi-grid">
+                <div class="kpi-card">
+                    <div class="kpi-value" id="totalFeedbacksMonth">0</div>
+                    <div class="kpi-label">Feedbacks Entregados (Mes)</div>
+                </div>
+                <div class="kpi-card warning">
+                    <div class="kpi-value" id="pendingFeedbacks">0</div>
+                    <div class="kpi-label">Feedbacks Pendientes</div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-value" id="avgClosureTime">0</div>
+                    <div class="kpi-label">Tiempo Prom. Cierre (días)</div>
+                </div>
+            </div>
+
+            <!-- Efectividad del Feedback por Períodos -->
+            <div class="card">
+                <div class="card-header">
+                    <h3>Efectividad de Feedback - Reincidencia por Período</h3>
+                </div>
+                <div class="card-body">
+                    <div class="chart-container">
+                        <canvas id="feedbackEffectivenessPeriodsChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Reincidencia por Agente y Período -->
+            <div class="card">
+                <div class="card-header">
+                    <h3>Reincidencia por Agente (7/14/30 días)</h3>
+                </div>
+                <div class="card-body">
+                    <div id="reincidenceByAgentTable"></div>
+                </div>
+            </div>
+
+            <!-- Adopción de Coaching -->
+            <div class="section-grid">
+                <div class="card">
+                    <div class="card-header">
+                        <h3>Adopción de Coaching</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="chart-container chart-small">
+                            <canvas id="coachingAdoptionChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <h3>Tiempo de Cierre por Tipo</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="chart-container chart-small">
+                            <canvas id="closureTimeByTypeChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SECCIÓN 3: Métricas y KPIs -->
+        <div id="section-metricas" class="analysis-section">
+            <div class="insight-card" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
+                <h4>📈 Insights de Métricas</h4>
+                <p id="metricasInsight">Cargando métricas y KPIs...</p>
+            </div>
+
+            <!-- KPIs de Calidad Core -->
+            <div class="card">
+                <div class="card-header">
+                    <h3>KPIs de Calidad Core</h3>
+                </div>
+                <div class="card-body">
+                    <div class="kpi-grid">
+                        <div class="kpi-card">
+                            <div class="kpi-value" id="qaScoreAvg">0</div>
+                            <div class="kpi-label">QA Score Promedio</div>
+                        </div>
+                        <div class="kpi-card success">
+                            <div class="kpi-value" id="qualityPassRate">0%</div>
+                            <div class="kpi-label">Quality Pass Rate</div>
+                        </div>
+                        <div class="kpi-card error">
+                            <div class="kpi-value" id="criticalErrorRate">0</div>
+                            <div class="kpi-label">Critical Error Rate (por 100)</div>
+                        </div>
+                        <div class="kpi-card">
+                            <div class="kpi-value" id="defectDensityAvg">0</div>
+                            <div class="kpi-label">Defect Density (DPL)</div>
+                        </div>
+                        <div class="kpi-card warning">
+                            <div class="kpi-value" id="reincidenceRate30">0%</div>
+                            <div class="kpi-label">Reincidencia 30 días</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- KPIs de CX -->
+            <div class="card">
+                <div class="card-header">
+                    <h3>KPIs de Experiencia del Cliente (CX)</h3>
+                </div>
+                <div class="card-body">
+                    <div class="kpi-grid">
+                        <div class="kpi-card">
+                            <div class="kpi-value" id="fcrRate">0%</div>
+                            <div class="kpi-label">FCR Rate (Sin Recontact)</div>
+                        </div>
+                        <div class="kpi-card">
+                            <div class="kpi-value" id="recontactRate">0%</div>
+                            <div class="kpi-label">Recontact Rate</div>
+                        </div>
+                        <div class="kpi-card warning">
+                            <div class="kpi-value" id="transferRateMetric">0%</div>
+                            <div class="kpi-label">Transfer Rate</div>
+                        </div>
+                        <div class="kpi-card warning">
+                            <div class="kpi-value" id="excessiveHoldRate">0%</div>
+                            <div class="kpi-label">Excessive Hold Rate</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- KPIs Operativos -->
+            <div class="section-grid">
+                <div class="card">
+                    <div class="card-header">
+                        <h3>AHT vs Calidad</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="chart-container chart-small">
+                            <canvas id="ahtVsQualityChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <h3>Hold Time vs Errores</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="chart-container chart-small">
+                            <canvas id="holdVsErrorsChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- KPIs de Negocio -->
+            <div class="card">
+                <div class="card-header">
+                    <h3>KPIs de Negocio - Cancelaciones</h3>
+                </div>
+                <div class="card-body">
+                    <div class="kpi-grid">
+                        <div class="kpi-card success">
+                            <div class="kpi-value" id="cancelCompletionRate">0%</div>
+                            <div class="kpi-label">Cancel Completion Rate</div>
+                        </div>
+                        <div class="kpi-card">
+                            <div class="kpi-value" id="avgCallsByMotivo">0</div>
+                            <div class="kpi-label">Llamadas Prom. por Motivo</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Motivos de Cancelación -->
+            <div class="section-grid">
+                <div class="card">
+                    <div class="card-header">
+                        <h3>Mix de Motivos de Cancelación</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="chart-container chart-small">
+                            <canvas id="cancelMotivesChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <h3>Motivo de Cancelación x Errores</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="chart-container chart-small">
+                            <canvas id="motivoVsErrorsChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SECCIÓN 4: Insights por Agente -->
+        <div id="section-insights" class="analysis-section">
+            <div class="insight-card" style="background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);">
+                <h4>💡 Insights Individuales</h4>
+                <p id="insightsInsight">Cargando insights por agente...</p>
+            </div>
+
+            <!-- Alertas de Alto Riesgo -->
+            <div id="alertasAgenteContainer"></div>
+
+            <!-- Agentes en Riesgo -->
+            <div class="card">
+                <div class="card-header">
+                    <h3>Agent - Top Offenders</h3>
+                </div>
+                <div class="card-body">
+                    <div id="riskAgentsDetailList"></div>
+                </div>
+            </div>
+
+            <!-- Recomendaciones Post-Feedback -->
+            <div class="card">
+                <div class="card-header">
+                    <h3>Recomendaciones Post-Feedback por Agente</h3>
+                </div>
+                <div class="card-body">
+                    <div id="recommendationsPerAgent"></div>
+                </div>
+            </div>
+
+            <!-- Matriz de Riesgo -->
+            <div class="card">
+                <div class="card-header">
+                    <h3>Matriz de Riesgo: Tasa de Error % x Total Auditorías</h3>
+                </div>
+                <div class="card-body">
+                    <div class="chart-container">
+                        <canvas id="agentRiskMatrixChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SECCIÓN 5: Análisis de Mejoras (Migrado) -->
+        <div id="section-mejoras" class="analysis-section">
+            <div class="insight-card" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">
+                <h4>📋 Análisis Comparativo</h4>
+                <p class="subtitle" style="color: white; opacity: 0.95;">Compara el desempeño antes y después del feedback</p>
+            </div>
+
+            <!-- Selector de agente y feedback -->
+            <div class="card">
+                <div class="card-body">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="mejorasAgentId">Seleccionar Agente</label>
+                            <select id="mejorasAgentId" name="mejorasAgentId">
+                                <option value="">Selecciona un agente para analizar</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="mejorasFeedbackId">Seleccionar Feedback</label>
+                            <select id="mejorasFeedbackId" name="mejorasFeedbackId">
+                                <option value="">Primero selecciona un agente</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group" style="display: flex; align-items: flex-end;">
+                            <button onclick="performMejorasAnalysis()" class="btn btn-primary">Analizar</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Mensaje inicial -->
+            <div id="mejorasNoData" class="card">
+                <div class="card-body" style="text-align: center; padding: 3rem;">
+                    <div style="font-size: 3rem; margin-bottom: 1rem;">📊</div>
+                    <h3 style="margin-bottom: 0.5rem;">Selecciona un Agente y Feedback</h3>
+                    <p class="subtitle">Los resultados del análisis comparativo aparecerán aquí</p>
+                </div>
+            </div>
+
+            <!-- Resultados del análisis -->
+            <div id="mejorasResults" style="display: none;">
+                <!-- Se llenará dinámicamente -->
+            </div>
+        </div>
+    </main>
+
+    <!-- Supabase SDK v2 -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.0/dist/umd/supabase.min.js"></script>
+    <script src="supabase-config.js"></script>
+    <script src="app.js"></script>
+    <script src="analisis-avanzado.js"></script>
+</body>
+</html>

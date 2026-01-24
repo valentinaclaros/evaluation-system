@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Secondary Jobs Pendientes - Sistema de Evaluación</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        .sj-card {
+            background: var(--bg-primary);
+            border-radius: var(--border-radius);
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            box-shadow: var(--shadow-sm);
+            border-left: 4px solid var(--warning-color);
+            transition: var(--transition);
+        }
+        
+        .sj-card:hover {
+            box-shadow: var(--shadow-md);
+            transform: translateY(-2px);
+        }
+        
+        .sj-card.gestionado {
+            border-left-color: var(--success-color);
+            opacity: 0.7;
+        }
+        
+        .sj-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            margin-bottom: 1rem;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+        
+        .sj-info {
+            flex: 1;
+        }
+        
+        .sj-agent-name {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--primary-color);
+            margin-bottom: 0.5rem;
+        }
+        
+        .sj-date {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            margin-bottom: 0.25rem;
+        }
+        
+        .sj-customer {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+        }
+        
+        .sj-status-toggle {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            align-items: flex-end;
+        }
+        
+        .status-label {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+        }
+        
+        .status-select {
+            padding: 0.5rem 1rem;
+            border: 2px solid var(--border-color);
+            border-radius: var(--border-radius-sm);
+            font-family: inherit;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            background-color: var(--bg-primary);
+        }
+        
+        .status-select.pendiente {
+            border-color: var(--warning-color);
+            color: var(--warning-color);
+        }
+        
+        .status-select.gestionado {
+            border-color: var(--success-color);
+            color: var(--success-color);
+        }
+        
+        .status-select:hover {
+            transform: scale(1.02);
+            box-shadow: var(--shadow-sm);
+        }
+        
+        .sj-comments-container {
+            margin-top: 1rem;
+            display: none;
+        }
+        
+        .sj-comments-container.visible {
+            display: block;
+        }
+        
+        .sj-comments-label {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 0.5rem;
+            display: block;
+        }
+        
+        .sj-comments-textarea {
+            width: 100%;
+            min-height: 80px;
+            padding: 0.75rem;
+            border: 2px solid var(--border-color);
+            border-radius: var(--border-radius-sm);
+            font-family: inherit;
+            font-size: 0.9rem;
+            resize: vertical;
+            transition: var(--transition);
+        }
+        
+        .sj-comments-textarea:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+        }
+        
+        .sj-detail-section {
+            display: none;
+            margin-top: 1rem;
+            padding: 1.5rem;
+            background: var(--bg-secondary);
+            border-radius: var(--border-radius-sm);
+            border: 2px solid var(--border-color);
+        }
+        
+        .sj-detail-section.expanded {
+            display: block;
+            animation: slideDown 0.3s ease;
+        }
+        
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                max-height: 0;
+            }
+            to {
+                opacity: 1;
+                max-height: 1000px;
+            }
+        }
+        
+        .sj-detail-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+        
+        .sj-detail-field {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        
+        .sj-detail-field-label {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .sj-detail-field-value {
+            font-size: 1rem;
+            color: var(--text-primary);
+            font-weight: 500;
+        }
+        
+        .sj-errors-section {
+            margin-top: 1rem;
+            padding: 1rem;
+            background: var(--bg-primary);
+            border-radius: var(--border-radius-sm);
+            border-left: 4px solid var(--error-color);
+        }
+        
+        .sj-errors-section-title {
+            font-size: 0.95rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 0.75rem;
+        }
+        
+        .sj-toggle-detail-btn {
+            margin-top: 1rem;
+            padding: 0.5rem 1rem;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius-sm);
+            font-family: inherit;
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--primary-color);
+            cursor: pointer;
+            transition: var(--transition);
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .sj-toggle-detail-btn:hover {
+            background: var(--primary-color);
+            color: white;
+            transform: translateY(-1px);
+            box-shadow: var(--shadow-sm);
+        }
+        
+        .sj-toggle-icon {
+            transition: transform 0.3s ease;
+        }
+        
+        .sj-toggle-icon.rotated {
+            transform: rotate(180deg);
+        }
+        
+        .sj-details {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1rem;
+            padding: 1rem;
+            background: var(--bg-tertiary);
+            border-radius: var(--border-radius-sm);
+        }
+        
+        .sj-detail-item {
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+        }
+        
+        .sj-detail-label {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+        
+        .sj-detail-value {
+            font-size: 0.95rem;
+            color: var(--text-primary);
+            font-weight: 600;
+        }
+        
+        .sj-all-errors {
+            margin-top: 1rem;
+            padding: 1rem;
+            background: var(--bg-secondary);
+            border-radius: var(--border-radius-sm);
+        }
+        
+        .sj-errors-title {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 0.5rem;
+        }
+        
+        .sj-errors-list {
+            list-style: none;
+            padding-left: 0;
+        }
+        
+        .sj-errors-list li {
+            padding: 0.25rem 0;
+            color: var(--text-primary);
+            font-size: 0.85rem;
+        }
+        
+        .sj-errors-list li:before {
+            content: "• ";
+            color: var(--error-color);
+            font-weight: bold;
+            margin-right: 0.5rem;
+        }
+        
+        .sj-errors-list li.sj-error {
+            font-weight: 600;
+            color: var(--warning-color);
+        }
+        
+        .sj-errors-list li.sj-error:before {
+            content: "⚠️ ";
+            margin-right: 0.5rem;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+        
+        .stat-card {
+            background: var(--bg-primary);
+            padding: 1.5rem;
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow-sm);
+            text-align: center;
+        }
+        
+        .stat-value {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+        
+        .stat-value.pendiente {
+            color: var(--warning-color);
+        }
+        
+        .stat-value.gestionado {
+            color: var(--success-color);
+        }
+        
+        .stat-value.total {
+            color: var(--primary-color);
+        }
+        
+        .stat-label {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+        
+        .filter-tabs {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            border-bottom: 2px solid var(--border-color);
+        }
+        
+        .filter-tab {
+            padding: 0.75rem 1.5rem;
+            background: none;
+            border: none;
+            border-bottom: 3px solid transparent;
+            font-family: inherit;
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: var(--transition);
+            margin-bottom: -2px;
+        }
+        
+        .filter-tab:hover {
+            color: var(--text-primary);
+        }
+        
+        .filter-tab.active {
+            color: var(--primary-color);
+            border-bottom-color: var(--primary-color);
+        }
+        
+        .no-sj {
+            text-align: center;
+            padding: 4rem 2rem;
+            background: var(--bg-primary);
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow-sm);
+        }
+        
+        .no-sj-icon {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+        }
+        
+        .sj-actions {
+            display: flex;
+            gap: 0.75rem;
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border-color);
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="nav-brand">
+                <h1>📊 Sistema de Evaluación</h1>
+            </div>
+            <ul class="nav-menu">
+                <li><a href="index.html">Dashboard</a></li>
+                <li><a href="detalle-auditorias.html">Detalle de Auditorías</a></li>
+                <li><a href="detalle-feedbacks.html">Detalle de Feedbacks</a></li>
+                <li><a href="analisis-avanzado.html">Análisis Avanzado</a></li>
+                <li><a href="agentes.html">Gestión de Agentes</a></li>
+                <li><a href="sj-pendientes.html" class="active">SJ Pendientes</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <main class="container">
+        <header class="page-header">
+            <div>
+                <h2>Secondary Jobs Pendientes</h2>
+                <p class="subtitle">Gestión de casos donde no se escaló el Secondary Job</p>
+            </div>
+            <button onclick="exportSJToCSV()" class="btn btn-secondary">📥 Exportar CSV</button>
+        </header>
+
+        <!-- Estadísticas -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-value total" id="totalSJ">0</div>
+                <div class="stat-label">Total de Casos</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value pendiente" id="pendientesSJ">0</div>
+                <div class="stat-label">⚠️ No Gestionados</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value gestionado" id="gestionadosSJ">0</div>
+                <div class="stat-label">✅ Gestionados</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="porcentajeSJ" style="color: var(--info-color);">0%</div>
+                <div class="stat-label">% Gestionados</div>
+            </div>
+        </div>
+
+        <!-- Filtros por estado -->
+        <div class="filter-tabs">
+            <button class="filter-tab active" onclick="filterBySJStatus('todos')" id="tab-todos">
+                Todos los Casos
+            </button>
+            <button class="filter-tab" onclick="filterBySJStatus('pendiente')" id="tab-pendiente">
+                No Gestionados
+            </button>
+            <button class="filter-tab" onclick="filterBySJStatus('gestionado')" id="tab-gestionado">
+                Gestionados
+            </button>
+        </div>
+
+        <!-- Contenedor de casos -->
+        <div id="sjContainer">
+            <div class="no-sj">
+                <div class="no-sj-icon">📋</div>
+                <p>Cargando casos...</p>
+            </div>
+        </div>
+    </main>
+
+    <!-- Supabase SDK v2 -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.0/dist/umd/supabase.min.js"></script>
+    <script src="supabase-config.js"></script>
+    <script src="app.js"></script>
+    <script src="sj-pendientes.js"></script>
+</body>
+</html>
