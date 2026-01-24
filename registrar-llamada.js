@@ -104,8 +104,6 @@ function updateErrorsSection(callType, criticality) {
     const errorHint = document.getElementById('errorHint');
     const errorsCuentaAhorros = document.getElementById('errorsCuentaAhorros');
     const errorsTarjetaCredito = document.getElementById('errorsTarjetaCredito');
-    const errorsNuPlus = document.getElementById('errorsNuPlus');
-    const errorsCertificados = document.getElementById('errorsCertificados');
     
     // Limpiar selecciones previas
     document.querySelectorAll('input[name="error"]').forEach(cb => cb.checked = false);
@@ -113,8 +111,6 @@ function updateErrorsSection(callType, criticality) {
     // Ocultar todas las secciones primero
     errorsCuentaAhorros.style.display = 'none';
     errorsTarjetaCredito.style.display = 'none';
-    errorsNuPlus.style.display = 'none';
-    errorsCertificados.style.display = 'none';
     
     // Si la criticidad es "perfecto", ocultar toda la sección de errores
     if (criticality === 'perfecto') {
@@ -143,18 +139,6 @@ function updateErrorsSection(callType, criticality) {
         errorsContainer.style.display = 'block';
         errorsCuentaAhorros.style.display = 'block';
         errorsTarjetaCredito.style.display = 'block';
-        
-    } else if (callType === 'nu_plus') {
-        // Mostrar errores de Nu Plus
-        errorHint.style.display = 'none';
-        errorsContainer.style.display = 'block';
-        errorsNuPlus.style.display = 'block';
-        
-    } else if (callType === 'certificados') {
-        // Mostrar errores de Certificados
-        errorHint.style.display = 'none';
-        errorsContainer.style.display = 'block';
-        errorsCertificados.style.display = 'block';
         
     } else {
         // No hay motivo seleccionado
@@ -500,14 +484,9 @@ function updateCancellationReasons() {
         });
         
         return; // Salir temprano para no procesar el código de abajo
-    } else {
-        // Nu Plus y Certificados no requieren motivo
-        reasonGroup.style.display = 'none';
-        reasonSelect.required = false;
-        reasonSelect.value = ''; // Limpiar el valor cuando se oculta
     }
     
-    // Agregar opciones al select
+    // Agregar opciones al select (solo para cancelaciones simples)
     reasons.forEach(reason => {
         const option = document.createElement('option');
         option.value = reason;
