@@ -324,7 +324,11 @@ function generateId() {
 // Formatear fecha
 function formatDate(dateString) {
     if (!dateString) return '-';
-    const date = new Date(dateString);
+    
+    // Usar el formato de fecha local sin conversión de zona horaria
+    const [year, month, day] = dateString.split('T')[0].split('-');
+    const date = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+    
     return date.toLocaleDateString('es-ES', {
         year: 'numeric',
         month: 'short',
