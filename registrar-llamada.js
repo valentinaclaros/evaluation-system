@@ -188,6 +188,10 @@ function setupForm() {
         const cancellationReasonGroup = document.getElementById('cancellationReasonGroup');
         const cancellationReasonSelect = document.getElementById('cancellationReason');
         
+        // Campos de multiproducto
+        const multiAhorrosSelect = document.getElementById('multiproductoAhorrosReason');
+        const multiCreditoSelect = document.getElementById('multiproductoCreditoReason');
+        
         // Validar motivo de cancelación si es visible y requerido
         if (cancellationReasonGroup.style.display === 'block' && cancellationReasonSelect.required) {
             if (!cancellationReasonSelect.value || cancellationReasonSelect.value === '') {
@@ -196,12 +200,32 @@ function setupForm() {
             }
         }
         
+        // Validar motivos de multiproducto si están visibles
+        if (callType === 'cancelacion_multiproducto') {
+            if (!multiAhorrosSelect.value || multiAhorrosSelect.value === '') {
+                showMessage('errorMessage', 'Debes seleccionar el motivo de Cuenta de Ahorros', 'error');
+                return;
+            }
+            if (!multiCreditoSelect.value || multiCreditoSelect.value === '') {
+                showMessage('errorMessage', 'Debes seleccionar el motivo de Tarjeta de Crédito', 'error');
+                return;
+            }
+        }
+        
+        // Determinar el valor de cancellationReason según el tipo
+        let cancellationReason = 'N/A';
+        if (callType === 'cancelacion_multiproducto') {
+            cancellationReason = `Ahorros: ${multiAhorrosSelect.value} | Crédito: ${multiCreditoSelect.value}`;
+        } else {
+            cancellationReason = cancellationReasonSelect.value || 'N/A';
+        }
+        
         // Recopilar datos del formulario
         const formData = {
             callDate: document.getElementById('callDate').value,
             customerId: document.getElementById('customerId').value.trim(),
             callType: callType,
-            cancellationReason: cancellationReasonSelect.value || 'N/A',
+            cancellationReason: cancellationReason,
             auditDate: document.getElementById('auditDate').value,
             enlacePv: document.getElementById('enlacePv').value.trim(),
             bpo: document.getElementById('bpo').value,
@@ -314,9 +338,19 @@ async function checkEditMode() {
             if (audit.cancellationReason) {
                 // Primero actualizar la razón de contacto para cargar las opciones
                 updateCancellationReasons();
+                
                 // Luego establecer el valor
                 setTimeout(() => {
-                    document.getElementById('cancellationReason').value = audit.cancellationReason;
+                    if (audit.callType === 'cancelacion_multiproducto' && audit.cancellationReason.includes('|')) {
+                        // Parsear motivos de multiproducto
+                        const parts = audit.cancellationReason.split('|');
+                        const ahorrosMotivo = parts[0].replace('Ahorros: ', '').trim();
+                        const creditoMotivo = parts[1].replace('Crédito: ', '').trim();
+                        document.getElementById('multiproductoAhorrosReason').value = ahorrosMotivo;
+                        document.getElementById('multiproductoCreditoReason').value = creditoMotivo;
+                    } else {
+                        document.getElementById('cancellationReason').value = audit.cancellationReason;
+                    }
                 }, 100);
             }
             
@@ -380,8 +414,24 @@ function updateCancellationReasons() {
     const reasonGroup = document.getElementById('cancellationReasonGroup');
     const reasonSelect = document.getElementById('cancellationReason');
     
+    // Elementos para multiproducto
+    const multiAhorrosGroup = document.getElementById('multiproductoAhorrosReasonGroup');
+    const multiAhorrosSelect = document.getElementById('multiproductoAhorrosReason');
+    const multiCreditoGroup = document.getElementById('multiproductoCreditoReasonGroup');
+    const multiCreditoSelect = document.getElementById('multiproductoCreditoReason');
+    
     // Limpiar opciones
     reasonSelect.innerHTML = '<option value="">Selecciona un motivo</option>';
+    multiAhorrosSelect.innerHTML = '<option value="">Selecciona un motivo</option>';
+    multiCreditoSelect.innerHTML = '<option value="">Selecciona un motivo</option>';
+    
+    // Ocultar todos los grupos primero
+    reasonGroup.style.display = 'none';
+    reasonSelect.required = false;
+    multiAhorrosGroup.style.display = 'none';
+    multiAhorrosSelect.required = false;
+    multiCreditoGroup.style.display = 'none';
+    multiCreditoSelect.required = false;
     
     // Motivos para Cuenta de Ahorros
     const cuentaAhorrosReasons = [
@@ -427,11 +477,29 @@ function updateCancellationReasons() {
         reasonGroup.style.display = 'block';
         reasonSelect.required = true;
     } else if (callType === 'cancelacion_multiproducto') {
-        // Unir ambas listas sin repetir
-        const combined = [...new Set([...cuentaAhorrosReasons, ...tarjetaCreditoReasons])];
-        reasons = combined.sort();
-        reasonGroup.style.display = 'block';
-        reasonSelect.required = true;
+        // Mostrar campos separados para ahorros y crédito
+        multiAhorrosGroup.style.display = 'block';
+        multiAhorrosSelect.required = true;
+        multiCreditoGroup.style.display = 'block';
+        multiCreditoSelect.required = true;
+        
+        // Llenar opciones para cuenta de ahorros
+        cuentaAhorrosReasons.forEach(reason => {
+            const option = document.createElement('option');
+            option.value = reason;
+            option.textContent = reason;
+            multiAhorrosSelect.appendChild(option);
+        });
+        
+        // Llenar opciones para tarjeta de crédito
+        tarjetaCreditoReasons.forEach(reason => {
+            const option = document.createElement('option');
+            option.value = reason;
+            option.textContent = reason;
+            multiCreditoSelect.appendChild(option);
+        });
+        
+        return; // Salir temprano para no procesar el código de abajo
     } else {
         // Nu Plus y Certificados no requieren motivo
         reasonGroup.style.display = 'none';
