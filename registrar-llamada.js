@@ -2,6 +2,29 @@
 // Registrar Llamada - Lógica del formulario
 // ===================================
 
+// Convertir formato MM:SS a minutos decimales
+function convertMMSSToDecimal(timeString) {
+    if (!timeString || timeString.trim() === '') return 0;
+    
+    const parts = timeString.split(':');
+    if (parts.length !== 2) return 0;
+    
+    const minutes = parseInt(parts[0]) || 0;
+    const seconds = parseInt(parts[1]) || 0;
+    
+    return minutes + (seconds / 60);
+}
+
+// Convertir minutos decimales a formato MM:SS
+function convertDecimalToMMSS(decimalMinutes) {
+    if (!decimalMinutes || decimalMinutes === 0) return '0:00';
+    
+    const minutes = Math.floor(decimalMinutes);
+    const seconds = Math.round((decimalMinutes - minutes) * 60);
+    
+    return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+}
+
 document.addEventListener('DOMContentLoaded', async function() {
     // Limpiar editingAuditId si no hay parámetro de edición en la URL
     const urlParams = new URLSearchParams(window.location.search);
@@ -189,12 +212,12 @@ function setupForm() {
             errorDescription: selectedErrors.length > 0 ? selectedErrors.join('; ') : 'N/A',
             errors: selectedErrors,
             callNotes: document.getElementById('callNotes').value.trim(),
-            // Nuevos campos operativos
-            callDuration: parseFloat(document.getElementById('callDuration').value) || 0,
+            // Nuevos campos operativos - Convertir MM:SS a decimal
+            callDuration: convertMMSSToDecimal(document.getElementById('callDuration').value),
             transferAttempt: document.getElementById('transferAttempt').value,
             excessiveHold: document.getElementById('excessiveHold').value,
             holdTime: document.getElementById('excessiveHold').value === 'si' ? 
-                (parseFloat(document.getElementById('holdTime').value) || 0) : 0
+                convertMMSSToDecimal(document.getElementById('holdTime').value) : 0
         };
         
         // Validaciones adicionales
@@ -298,11 +321,11 @@ async function checkEditMode() {
             }
             
             // Cargar nuevos campos operativos
-            document.getElementById('callDuration').value = audit.callDuration || '';
+            document.getElementById('callDuration').value = audit.callDuration ? convertDecimalToMMSS(audit.callDuration) : '';
             document.getElementById('transferAttempt').value = audit.transferAttempt || '';
             document.getElementById('excessiveHold').value = audit.excessiveHold || '';
             if (audit.excessiveHold === 'si' && audit.holdTime) {
-                document.getElementById('holdTime').value = audit.holdTime;
+                document.getElementById('holdTime').value = convertDecimalToMMSS(audit.holdTime);
                 toggleHoldTimeInput();
             }
             

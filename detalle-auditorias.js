@@ -2,6 +2,16 @@
 // Detalle de Auditorías - Lógica
 // ===================================
 
+// Convertir minutos decimales a formato MM:SS
+function convertDecimalToMMSS(decimalMinutes) {
+    if (!decimalMinutes || decimalMinutes === 0) return '0:00';
+    
+    const minutes = Math.floor(decimalMinutes);
+    const seconds = Math.round((decimalMinutes - minutes) * 60);
+    
+    return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+}
+
 let currentFilters = {
     dateFrom: null,
     dateTo: null,
@@ -266,7 +276,7 @@ function renderAudits(audits) {
                     ${audit.callDuration ? `
                     <div class="audit-detail-item">
                         <span class="audit-detail-label">Duración de la llamada</span>
-                        <span class="audit-detail-value">${audit.callDuration} minutos</span>
+                        <span class="audit-detail-value">${convertDecimalToMMSS(audit.callDuration)}</span>
                     </div>
                     ` : ''}
                     ${audit.transferAttempt ? `
@@ -284,7 +294,7 @@ function renderAudits(audits) {
                     ${audit.holdTime && audit.excessiveHold === 'si' ? `
                     <div class="audit-detail-item">
                         <span class="audit-detail-label">Tiempo de espera</span>
-                        <span class="audit-detail-value">${audit.holdTime} minutos</span>
+                        <span class="audit-detail-value">${convertDecimalToMMSS(audit.holdTime)}</span>
                     </div>
                     ` : ''}
                     ${audit.cancellationReason ? `
