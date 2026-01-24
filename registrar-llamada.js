@@ -368,7 +368,9 @@ function updateCancellationReasons() {
         'Inconformidad por cobro 4x1000',
         'Falta de beneficios',
         'Cobro de comisiones (retiros o compras internacionales)',
-        'Mala experiencia'
+        'Mala experiencia',
+        'No sabe usar la App',
+        'Otro'
     ];
     
     // Motivos para Tarjeta de Crédito
@@ -384,7 +386,9 @@ function updateCancellationReasons() {
         'Funcionalidades no disponibles',
         'Mala experiencia',
         'Cobro de cuota de manejo',
-        'Tarjeta sin cupo (Abre Caminos)'
+        'Tarjeta sin cupo (Abre Caminos)',
+        'No sabe usar la App',
+        'Otro'
     ];
     
     let reasons = [];
