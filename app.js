@@ -142,7 +142,7 @@ async function addAudit(audit) {
             agent_id: audit.agentId,
             auditor: audit.auditor,
             criticality: audit.criticality,
-            tnps: audit.tnps ? parseInt(audit.tnps) : null,
+            tnps: audit.tnps || null,
             error_description: audit.errorDescription || '',
             errors: audit.errors || [],
             call_notes: audit.callNotes || '',
@@ -180,7 +180,7 @@ async function updateAudit(auditId, audit) {
             agent_id: audit.agentId,
             auditor: audit.auditor,
             criticality: audit.criticality,
-            tnps: audit.tnps ? parseInt(audit.tnps) : null,
+            tnps: audit.tnps || null,
             error_description: audit.errorDescription || '',
             errors: audit.errors || [],
             call_notes: audit.callNotes || '',
@@ -365,7 +365,11 @@ function getTnpsBadge(tnps) {
         'detractor': '<span class="badge badge-detractor"><span class="circle-indicator red"></span> Detractor</span>',
         'null': '<span class="badge badge-null"><span class="circle-indicator gray"></span> Sin respuesta</span>'
     };
-    return badges[tnps] || tnps;
+    // Si no hay valor o es null/undefined, mostrar "Sin respuesta"
+    if (!tnps || tnps === null || tnps === 'null') {
+        return badges['null'];
+    }
+    return badges[tnps] || badges['null'];
 }
 
 // Obtener badge de BPO

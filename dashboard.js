@@ -97,8 +97,8 @@ async function loadTnpsDistribution() {
     const promoters = filteredAudits.filter(a => a.tnps === 'promoter').length;
     const neutrals = filteredAudits.filter(a => a.tnps === 'neutral').length;
     const detractors = filteredAudits.filter(a => a.tnps === 'detractor').length;
-    const nulls = filteredAudits.filter(a => a.tnps === 'null').length;
-    
+    const nulls = filteredAudits.filter(a => !a.tnps || a.tnps === 'null' || a.tnps === null).length;
+        
     const total = filteredAudits.length || 1; // Evitar división por cero
     
     // Actualizar contadores
