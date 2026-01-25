@@ -49,13 +49,22 @@ document.addEventListener('DOMContentLoaded', async function() {
                 agentCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
             }
             
-            // Si hay un auditId específico, abrir su detalle
+            // Si hay un auditId específico, abrir su detalle y resaltar
             if (auditId) {
                 setTimeout(() => {
+                    // Resaltar la auditoría específica
+                    const auditCard = document.querySelector(`[data-audit-id="${auditId}"]`);
+                    if (auditCard) {
+                        auditCard.style.border = '3px solid var(--primary-color)';
+                        auditCard.style.boxShadow = '0 0 20px rgba(99, 102, 241, 0.4)';
+                        auditCard.style.transition = 'all 0.3s ease';
+                        auditCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }
+                    
+                    // Abrir el detalle expandido
                     const detailBtn = document.getElementById(`toggle-btn-${auditId}`);
-                    if (detailBtn) {
+                    if (detailBtn && !detailBtn.closest('.audit-detail-full').classList.contains('expanded')) {
                         detailBtn.click();
-                        detailBtn.scrollIntoView({ behavior: 'smooth', block: 'center' });
                     }
                 }, 500);
             }
@@ -238,7 +247,7 @@ function renderAudits(audits) {
         }
         
         return `
-        <div class="audit-item">
+        <div class="audit-item" data-audit-id="${audit.id}">
             <div class="audit-header-info">
                 <div class="audit-date">📅 ${formatDate(audit.callDate)}</div>
                 <div class="audit-badges">
