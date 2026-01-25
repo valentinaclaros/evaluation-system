@@ -447,8 +447,10 @@ async function calculateAgentMetrics(agentId, startDate = null, endDate = null) 
     }
     
     const totalCalls = agentAudits.length;
-    const errorsCount = agentAudits.filter(a => a.errorDescription).length;
-    const errorRate = totalCalls > 0 ? ((errorsCount / totalCalls) * 100).toFixed(1) : 0;
+    const errorsCount = agentAudits.filter(a => 
+        a.criticality === 'critico' || a.criticality === 'alto'
+    ).length;
+    const errorRate = totalCalls > 0 ? ((errorsCount / totalCalls) * 100).toFixed(1) : '0.0';
     
     const criticalErrors = agentAudits.filter(a => 
         a.criticality === 'critico' || a.criticality === 'alta' || a.criticality === 'alto'
