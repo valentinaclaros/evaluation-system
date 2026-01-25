@@ -74,8 +74,11 @@ async function loadAgentSummary(agentId) {
                new Date(audit.callDate) >= thirtyDaysAgo;
     });
     
-    const errorsCount = recentAudits.length;
-    const errorRate = recentAudits.length > 0 ? '100%' : '0%'; // Todas las auditorías registran errores
+    // Contar solo errores críticos/altos
+    const errorsCount = recentAudits.filter(a => 
+        a.criticality === 'critico' || a.criticality === 'alto'
+    ).length;
+    const errorRate = recentAudits.length > 0 ? ((errorsCount / recentAudits.length) * 100).toFixed(0) + '%' : '0%';
     
     document.getElementById('recentCallsCount').textContent = recentAudits.length;
     document.getElementById('recentErrorsCount').textContent = errorsCount;

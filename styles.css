@@ -617,6 +617,8 @@ body {
    =================================== */
 .table-container {
     overflow-x: auto;
+    max-height: 500px;
+    overflow-y: auto;
 }
 
 .data-table {
@@ -635,6 +637,10 @@ body {
     font-weight: 600;
     color: var(--text-secondary);
     border-bottom: 2px solid var(--border-color);
+    position: sticky;
+    top: 0;
+    background-color: var(--bg-tertiary);
+    z-index: 10;
 }
 
 .data-table td {

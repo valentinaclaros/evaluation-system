@@ -169,7 +169,9 @@ async function loadAgentsRanking() {
         const agentFeedbacks = feedbacks.filter(f => f.agentId === agent.id);
         
         const totalCalls = agentAudits.length;
-        const totalErrors = agentAudits.length; // Todas las auditorías registran errores
+        const totalErrors = agentAudits.filter(a => 
+            a.criticality === 'critico' || a.criticality === 'alto'
+        ).length;
         const errorRate = totalCalls > 0 ? ((totalErrors / totalCalls) * 100).toFixed(1) : 0;
         
         // Calcular promedio TNPS (simplificado)
