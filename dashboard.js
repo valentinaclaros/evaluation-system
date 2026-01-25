@@ -177,7 +177,11 @@ async function loadAgentsRanking() {
         // Calcular promedio TNPS (simplificado)
         const promoters = agentAudits.filter(a => a.tnps === 'promoter').length;
         const detractors = agentAudits.filter(a => a.tnps === 'detractor').length;
-        const tnpsScore = totalCalls > 0 ? 
+        const neutrals = agentAudits.filter(a => a.tnps === 'neutral').length;
+        const withTnps = promoters + detractors + neutrals;
+        
+        // Si no hay auditorías con TNPS, mostrar N/A
+        const tnpsScore = withTnps > 0 ? 
             (((promoters - detractors) / totalCalls) * 100).toFixed(0) : 'N/A';
         
         return {
