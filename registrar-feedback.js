@@ -88,25 +88,39 @@ function setupEventListeners() {
 
 // Analizar incidencias previas del agente
 async function analizarIncidenciasAgente(agentId) {
-    const feedbacks = await getFeedbacks();
-    const agent = await getAgentById(agentId);
+    console.log('Analizando incidencias para agente:', agentId);
     
-    // Filtrar feedbacks del agente que aplican matriz disciplinaria
-    const feedbacksConMatriz = feedbacks.filter(f => 
-        f.agentId === agentId && f.additionalSteps === 'matriz_disciplinaria'
-    );
-    
-    // Determinar nivel de incidencia (1-4)
-    currentIncidenciaLevel = feedbacksConMatriz.length + 1;
-    if (currentIncidenciaLevel > 4) {
-        currentIncidenciaLevel = 4; // Máximo 4 incidencias
+    try {
+        // Intentar obtener feedbacks previos del agente
+        const feedbacks = await getFeedbacks();
+        console.log('Feedbacks obtenidos:', feedbacks.length);
+        
+        // Filtrar feedbacks del agente que aplican matriz disciplinaria
+        const feedbacksConMatriz = feedbacks.filter(f => 
+            f.agentId === agentId && f.additionalSteps === 'matriz_disciplinaria'
+        );
+        
+        console.log('Feedbacks con matriz del agente:', feedbacksConMatriz.length);
+        
+        // Determinar nivel de incidencia (1-4)
+        currentIncidenciaLevel = feedbacksConMatriz.length + 1;
+        if (currentIncidenciaLevel > 4) {
+            currentIncidenciaLevel = 4; // Máximo 4 incidencias
+        }
+    } catch (error) {
+        // Si hay error, asumir que es primera incidencia
+        console.log('Error al cargar feedbacks, asumiendo primera incidencia:', error);
+        currentIncidenciaLevel = 1;
     }
     
+    console.log('Nivel de incidencia determinado:', currentIncidenciaLevel);
     mostrarIncidenciaCorrespondiente(currentIncidenciaLevel);
 }
 
 // Mostrar solo el campo de incidencia correspondiente
 function mostrarIncidenciaCorrespondiente(nivel) {
+    console.log('Mostrando incidencia nivel:', nivel);
+    
     const incidenciasContainer = document.getElementById('incidenciasContainer');
     const incidenciaTitle = document.getElementById('incidenciaTitle');
     
@@ -124,6 +138,7 @@ function mostrarIncidenciaCorrespondiente(nivel) {
     
     // Mostrar contenedor
     incidenciasContainer.style.display = 'block';
+    console.log('Container de incidencias mostrado');
     
     // Mostrar la incidencia correspondiente
     switch(nivel) {
@@ -131,21 +146,25 @@ function mostrarIncidenciaCorrespondiente(nivel) {
             incidenciaTitle.textContent = 'Primera Incidencia';
             document.getElementById('primeraIncidencia').style.display = 'block';
             document.getElementById('accionPrimeraIncidencia').required = true;
+            console.log('Primera incidencia mostrada');
             break;
         case 2:
             incidenciaTitle.textContent = 'Segunda Incidencia';
             document.getElementById('segundaIncidencia').style.display = 'block';
             document.getElementById('accionSegundaIncidencia').required = true;
+            console.log('Segunda incidencia mostrada');
             break;
         case 3:
             incidenciaTitle.textContent = 'Tercera Incidencia';
             document.getElementById('terceraIncidencia').style.display = 'block';
             document.getElementById('accionTerceraIncidencia').required = true;
+            console.log('Tercera incidencia mostrada');
             break;
         case 4:
             incidenciaTitle.textContent = 'Cuarta Incidencia';
             document.getElementById('cuartaIncidencia').style.display = 'block';
             document.getElementById('accionCuartaIncidencia').required = true;
+            console.log('Cuarta incidencia mostrada');
             break;
     }
 }
