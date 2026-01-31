@@ -283,9 +283,8 @@ async function handleSubmit(e) {
 
 // Guardar feedback y generar strike si aplica
 async function saveFeedback(formData) {
-    // Preparar datos del feedback para Supabase
+    // Preparar datos del feedback para Supabase (sin ID, Supabase lo genera automáticamente)
     const feedbackData = {
-        id: generateId(), // Generar ID único
         agent_id: formData.agentId,
         feedback_date: formData.feedbackDate,
         feedback_given_by: formData.givenBy,
