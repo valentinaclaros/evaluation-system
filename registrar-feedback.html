@@ -113,6 +113,23 @@
                     </div>
                 </div>
 
+                <!-- SECCIÓN STRIKE: Strike por Reincidencia (SIEMPRE VISIBLE) -->
+                <div class="form-section">
+                    <h3 class="section-title">⚠️ Strike por Reincidencia</h3>
+                    <div class="form-group">
+                        <label for="strikeLevel">Nivel de Strike (Opcional)</label>
+                        <select id="strikeLevel" name="strikeLevel">
+                            <option value="">Sin Strike</option>
+                            <option value="1">⚠️ Strike 1 (Primera/Segunda reincidencia)</option>
+                            <option value="2">🔴 Strike 2 (Tercera reincidencia)</option>
+                            <option value="3">🚨 Strike 3 (Cuarta reincidencia)</option>
+                        </select>
+                    </div>
+                    <p style="font-size: 0.9rem; color: var(--text-secondary); margin-top: 0.5rem;">
+                        💡 <strong>Nota:</strong> Selecciona el nivel de strike solo si el agente tiene reincidencias que ameriten un registro.
+                    </p>
+                </div>
+
                 <!-- Matriz Disciplinaria -->
                 <div class="form-section">
                     <h3 class="section-title">Matriz Disciplinaria</h3>
@@ -125,23 +142,6 @@
                             <option value="No">No</option>
                         </select>
                     </div>
-                </div>
-
-                <!-- SECCIÓN STRIKE: Selección Manual de Strike (solo si aplica matriz) -->
-                <div class="form-section" id="strikeSection" style="display: none;">
-                    <h3 class="section-title">⚠️ Strike por Reincidencia</h3>
-                    <div class="form-group">
-                        <label for="strikeLevel">Nivel de Strike *</label>
-                        <select id="strikeLevel" name="strikeLevel">
-                            <option value="">Seleccionar strike...</option>
-                            <option value="1">⚠️ Strike 1 (Primera/Segunda reincidencia)</option>
-                            <option value="2">🔴 Strike 2 (Tercera reincidencia)</option>
-                            <option value="3">🚨 Strike 3 (Cuarta reincidencia)</option>
-                        </select>
-                    </div>
-                    <p style="font-size: 0.9rem; color: var(--text-secondary); margin-top: 0.5rem;">
-                        💡 <strong>Nota:</strong> Selecciona el nivel de strike según el historial de reincidencias del agente.
-                    </p>
                 </div>
 
                 <!-- Detalles de la Matriz Disciplinaria (se muestra solo si aplica) -->

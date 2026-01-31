@@ -55,12 +55,10 @@ function setupEventListeners() {
     // Cuando cambia la matriz disciplinaria
     document.getElementById('matrizDisciplinaria').addEventListener('change', async function() {
         const matrizDetalles = document.getElementById('matrizDetallesSection');
-        const strikeSection = document.getElementById('strikeSection');
         const incidenciasContainer = document.getElementById('incidenciasContainer');
         
         if (this.value === 'Si') {
             matrizDetalles.style.display = 'block';
-            strikeSection.style.display = 'block'; // Mostrar selector de strike
             
             const agentId = document.getElementById('feedbackAgentId').value;
             if (agentId) {
@@ -76,17 +74,14 @@ function setupEventListeners() {
             document.getElementById('tipoFalta').required = true;
             document.getElementById('gravedad').required = true;
             document.getElementById('descripcionFalta').required = true;
-            document.getElementById('strikeLevel').required = true; // Strike requerido
         } else {
             matrizDetalles.style.display = 'none';
-            strikeSection.style.display = 'none'; // Ocultar selector de strike
             incidenciasContainer.style.display = 'none';
             
             // Quitar requeridos
             document.getElementById('tipoFalta').required = false;
             document.getElementById('gravedad').required = false;
             document.getElementById('descripcionFalta').required = false;
-            document.getElementById('strikeLevel').required = false; // Strike no requerido
         }
     });
 }
@@ -250,9 +245,6 @@ async function handleSubmit(e) {
             numeroIncidencia: currentIncidenciaLevel
         };
         
-        // Obtener el nivel de strike seleccionado
-        formData.strikeLevel = parseInt(document.getElementById('strikeLevel').value);
-        
         // Obtener la acción de incidencia correspondiente
         let accionIncidencia = '';
         switch(currentIncidenciaLevel) {
@@ -270,6 +262,12 @@ async function handleSubmit(e) {
                 break;
         }
         formData.matrizDisciplinaria.accionIncidencia = accionIncidencia;
+    }
+    
+    // Obtener el nivel de strike seleccionado (independiente de la matriz)
+    const strikeLevelValue = document.getElementById('strikeLevel').value;
+    if (strikeLevelValue) {
+        formData.strikeLevel = parseInt(strikeLevelValue);
     }
     
     try {
@@ -322,8 +320,8 @@ async function saveFeedback(formData) {
     
     console.log('Feedback guardado exitosamente:', feedback);
     
-    // Si aplica matriz disciplinaria y tiene strike seleccionado, generar strike
-    if (formData.matrizDisciplinaria && formData.strikeLevel) {
+    // Si hay strike seleccionado, generar strike (independiente de matriz)
+    if (formData.strikeLevel) {
         await generateStrike(formData, feedback.id);
     }
     
@@ -334,15 +332,29 @@ async function saveFeedback(formData) {
 async function generateStrike(formData, feedbackId) {
     const currentProject = getCurrentProject();
     
+    // Determinar descripción del strike
+    let feedbackDescription = formData.message; // Por defecto el plan de acción
+    
+    // Si tiene matriz disciplinaria, usar esos datos
+    if (formData.matrizDisciplinaria) {
+        feedbackDescription = `${formData.matrizDisciplinaria.tipoFalta} - ${formData.matrizDisciplinaria.descripcionFalta}`;
+    }
+    
+    // Determinar accionable
+    let accionable = 'Advertencia verbal'; // Por defecto
+    if (formData.matrizDisciplinaria && formData.matrizDisciplinaria.accionIncidencia) {
+        accionable = formData.matrizDisciplinaria.accionIncidencia;
+    }
+    
     // Preparar datos del strike
     const strikeData = {
         agent_id: formData.agentId,
         project: currentProject,
-        strike_level: formData.strikeLevel, // Nivel seleccionado manualmente
+        strike_level: formData.strikeLevel,
         feedback_id: feedbackId,
-        feedback_description: `${formData.matrizDisciplinaria.tipoFalta} - ${formData.matrizDisciplinaria.descripcionFalta}`,
-        aplica_matriz: 'Si',
-        accionable: formData.matrizDisciplinaria.accionIncidencia
+        feedback_description: feedbackDescription,
+        aplica_matriz: formData.matrizDisciplinaria ? 'Si' : 'No',
+        accionable: accionable
     };
     
     console.log('Guardando strike:', strikeData);
