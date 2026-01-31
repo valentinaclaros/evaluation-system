@@ -283,15 +283,12 @@ async function handleSubmit(e) {
 
 // Guardar feedback y generar strike si aplica
 async function saveFeedback(formData) {
-    // Preparar datos del feedback para Supabase (solo columnas que existen)
+    // Preparar datos del feedback para Supabase (solo columnas básicas que seguro existen)
     const feedbackData = {
         agent_id: formData.agentId,
         feedback_date: formData.feedbackDate,
         feedback_given_by: formData.givenBy,
-        type: formData.feedbackType,
-        plan_accion: formData.message,
-        channel: formData.channel,
-        owner: formData.owner
+        feedback_message: formData.message
     };
     
     console.log('Guardando feedback:', feedbackData);
@@ -321,7 +318,7 @@ async function saveFeedback(formData) {
 // Generar strike manualmente según selección del usuario
 async function generateStrike(formData, feedbackId) {
     // Determinar descripción del strike
-    let feedbackDescription = formData.message; // Por defecto el plan de acción
+    let feedbackDescription = `Tipo: ${formData.feedbackType} - ${formData.message}`;
     
     // Si tiene matriz disciplinaria, usar esos datos
     if (formData.matrizDisciplinaria) {
@@ -334,14 +331,18 @@ async function generateStrike(formData, feedbackId) {
         accionable = formData.matrizDisciplinaria.accionIncidencia;
     }
     
-    // Preparar datos del strike
+    // Preparar datos del strike (incluye más información ya que feedback es simple)
     const strikeData = {
         agent_id: formData.agentId,
         strike_level: formData.strikeLevel,
         feedback_id: feedbackId,
         feedback_description: feedbackDescription,
         aplica_matriz: formData.matrizDisciplinaria ? 'Si' : 'No',
-        accionable: accionable
+        accionable: accionable,
+        // Campos adicionales para guardar info del formulario
+        tipo_feedback: formData.feedbackType,
+        channel: formData.channel,
+        owner: formData.owner
     };
     
     console.log('Guardando strike:', strikeData);
