@@ -283,7 +283,7 @@ async function handleSubmit(e) {
 
 // Guardar feedback y generar strike si aplica
 async function saveFeedback(formData) {
-    // Preparar datos del feedback para Supabase
+    // Preparar datos del feedback para Supabase (solo columnas que existen)
     const feedbackData = {
         agent_id: formData.agentId,
         feedback_date: formData.feedbackDate,
@@ -291,14 +291,7 @@ async function saveFeedback(formData) {
         type: formData.feedbackType,
         plan_accion: formData.message,
         channel: formData.channel,
-        owner: formData.owner,
-        matriz_disciplinaria: formData.matrizDisciplinaria ? 'Si' : 'No',
-        tipo_falta: formData.matrizDisciplinaria?.tipoFalta || null,
-        gravedad: formData.matrizDisciplinaria?.gravedad || null,
-        descripcion_falta: formData.matrizDisciplinaria?.descripcionFalta || null,
-        numero_incidencia: formData.matrizDisciplinaria?.numeroIncidencia || null,
-        accion_incidencia: formData.matrizDisciplinaria?.accionIncidencia || null,
-        related_audits: formData.relatedCallIds || []
+        owner: formData.owner
     };
     
     console.log('Guardando feedback:', feedbackData);
