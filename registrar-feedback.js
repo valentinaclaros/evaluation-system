@@ -283,12 +283,16 @@ async function handleSubmit(e) {
 
 // Guardar feedback y generar strike si aplica
 async function saveFeedback(formData) {
-    // Preparar datos del feedback para Supabase (solo columnas básicas que seguro existen)
+    // Preparar datos del feedback para Supabase
     const feedbackData = {
+        id: generateId(), // Generar ID único
         agent_id: formData.agentId,
         feedback_date: formData.feedbackDate,
         feedback_given_by: formData.givenBy,
-        feedback_message: formData.message
+        feedback_message: formData.message,
+        feedback_type: formData.feedbackType,
+        priority: 'media',
+        additional_steps: formData.matrizDisciplinaria ? 'matriz_disciplinaria' : 'na'
     };
     
     console.log('Guardando feedback:', feedbackData);
