@@ -283,8 +283,6 @@ async function handleSubmit(e) {
 
 // Guardar feedback y generar strike si aplica
 async function saveFeedback(formData) {
-    const currentProject = getCurrentProject();
-    
     // Preparar datos del feedback para Supabase
     const feedbackData = {
         agent_id: formData.agentId,
@@ -294,7 +292,6 @@ async function saveFeedback(formData) {
         plan_accion: formData.message,
         channel: formData.channel,
         owner: formData.owner,
-        project: currentProject,
         matriz_disciplinaria: formData.matrizDisciplinaria ? 'Si' : 'No',
         tipo_falta: formData.matrizDisciplinaria?.tipoFalta || null,
         gravedad: formData.matrizDisciplinaria?.gravedad || null,
@@ -330,8 +327,6 @@ async function saveFeedback(formData) {
 
 // Generar strike manualmente según selección del usuario
 async function generateStrike(formData, feedbackId) {
-    const currentProject = getCurrentProject();
-    
     // Determinar descripción del strike
     let feedbackDescription = formData.message; // Por defecto el plan de acción
     
@@ -349,7 +344,6 @@ async function generateStrike(formData, feedbackId) {
     // Preparar datos del strike
     const strikeData = {
         agent_id: formData.agentId,
-        project: currentProject,
         strike_level: formData.strikeLevel,
         feedback_id: feedbackId,
         feedback_description: feedbackDescription,

@@ -319,14 +319,11 @@ async function clearFilters() {
 // Renderizar sección de strikes para un agente
 async function renderStrikesSection(agentId, feedbacks) {
     try {
-        const currentProject = getCurrentProject();
-        
         // Obtener strikes del agente desde Supabase
         const { data: strikes, error } = await supabase
             .from('strikes')
             .select('*')
             .eq('agent_id', agentId)
-            .eq('project', currentProject)
             .order('created_at', { ascending: false });
         
         if (error) throw error;
