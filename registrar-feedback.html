@@ -26,21 +26,27 @@
 
     <main class="container">
         <header class="page-header">
-            <h2>Registrar Feedback al Agente</h2>
-            <p class="subtitle">Proporciona retroalimentación constructiva basada en las auditorías</p>
+            <h2>Registrar Nuevo Feedback</h2>
+            <a href="index.html" class="btn btn-secondary">Volver al Dashboard</a>
         </header>
 
         <div class="form-card">
             <form id="feedbackForm" class="audit-form">
+                <!-- Información del Agente -->
                 <div class="form-section">
-                    <h3 class="section-title">Selección de Agente</h3>
+                    <h3 class="section-title">Información del Agente</h3>
                     
                     <div class="form-row">
                         <div class="form-group">
-                            <label for="feedbackAgentId">Agente *</label>
+                            <label for="feedbackAgentId">Nombre del Agente *</label>
                             <select id="feedbackAgentId" name="feedbackAgentId" required>
-                                <option value="">Selecciona un agente</option>
+                                <option value="">Seleccionar agente...</option>
                             </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="feedbackGivenBy">Feedback Dado Por *</label>
+                            <input type="text" id="feedbackGivenBy" name="feedbackGivenBy" value="Daniel Rodríguez" readonly required>
                         </div>
 
                         <div class="form-group">
@@ -48,110 +54,174 @@
                             <input type="date" id="feedbackDate" name="feedbackDate" required>
                         </div>
                     </div>
-
-                    <div class="form-group">
-                        <label for="feedbackGivenBy">Retroalimentación Dada Por *</label>
-                        <select id="feedbackGivenBy" name="feedbackGivenBy" required>
-                            <option value="">Seleccionar</option>
-                            <option value="Daniel Rodríguez">Daniel Rodríguez</option>
-                        </select>
-                    </div>
                 </div>
 
-                <!-- Resumen de errores recientes del agente -->
-                <div class="form-section" id="agentErrorsSummary" style="display: none;">
-                    <h3 class="section-title">Errores Recientes del Agente</h3>
-                    <div class="info-box">
-                        <div class="info-row">
-                            <span class="info-label">Llamadas auditadas (últimos 30 días):</span>
-                            <span class="info-value" id="recentCallsCount">0</span>
-                        </div>
-                        <div class="info-row">
-                            <span class="info-label">Errores identificados:</span>
-                            <span class="info-value" id="recentErrorsCount">0</span>
-                        </div>
-                        <div class="info-row">
-                            <span class="info-label">Tasa de error:</span>
-                            <span class="info-value" id="errorRate">0%</span>
-                        </div>
-                    </div>
-                    
-                    <div class="recent-errors-list" id="recentErrorsList">
-                        <!-- Se llenará dinámicamente -->
-                    </div>
-                </div>
-
+                <!-- Detalles del Feedback -->
                 <div class="form-section">
-                    <h3 class="section-title">Contenido del Feedback</h3>
-                    
-                    <div class="form-group">
-                        <label for="feedbackType">Tipo de Feedback *</label>
-                        <select id="feedbackType" name="feedbackType" required>
-                            <option value="">Selecciona el tipo</option>
-                            <option value="correctivo">🔴 Correctivo (Mejora requerida)</option>
-                            <option value="constructivo">🟡 Constructivo (Oportunidad de mejora)</option>
-                            <option value="positivo">🟢 Positivo (Reconocimiento)</option>
-                        </select>
-                    </div>
+                    <h3 class="section-title">Detalles del Feedback</h3>
                     
                     <div class="form-row">
                         <div class="form-group">
-                            <label for="feedbackProcess">Proceso *</label>
-                            <select id="feedbackProcess" name="feedbackProcess" required>
-                                <option value="">Seleccionar</option>
-                                <option value="cancelaciones">Cancelaciones</option>
-                                <option value="nu_plus">Nu Plus</option>
-                                <option value="certificados">Certificados</option>
+                            <label for="feedbackType">Tipo de Feedback *</label>
+                            <select id="feedbackType" name="feedbackType" required>
+                                <option value="">Seleccionar tipo...</option>
+                                <option value="Disciplinario">Disciplinario</option>
+                                <option value="Comportamiento">Comportamiento</option>
+                                <option value="Desempeño">Desempeño</option>
                             </select>
                         </div>
-                        
+
                         <div class="form-group">
-                            <label for="additionalSteps">Additional Steps *</label>
-                            <select id="additionalSteps" name="additionalSteps" required>
-                                <option value="">Seleccionar</option>
-                                <option value="na">N/A</option>
-                                <option value="matriz_disciplinaria">Matriz Disciplinaria</option>
+                            <label for="agentesInvolucrados">Agentes Involucrados *</label>
+                            <select id="agentesInvolucrados" name="agentesInvolucrados" required>
+                                <option value="">Seleccionar agente...</option>
                             </select>
                         </div>
+
+                        <div class="form-group">
+                            <label for="channel">Canal de Interacción *</label>
+                            <select id="channel" name="channel" required>
+                                <option value="">Seleccionar canal...</option>
+                                <option value="phone">Phone</option>
+                                <option value="chat">Chat</option>
+                                <option value="email">Email</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="owner">Owner *</label>
+                        <select id="owner" name="owner" required>
+                            <option value="">Seleccionar owner...</option>
+                            <option value="Andersson Franco">Andersson Franco</option>
+                            <option value="Sebastián Aranguren">Sebastián Aranguren</option>
+                            <option value="Kimberly Tovar">Kimberly Tovar</option>
+                            <option value="Yesica Cifuentes">Yesica Cifuentes</option>
+                            <option value="Alisson Cañizares">Alisson Cañizares</option>
+                            <option value="Derly Oñate">Derly Oñate</option>
+                            <option value="Fabian Zipamocha">Fabian Zipamocha</option>
+                        </select>
                     </div>
 
                     <div class="form-group full-width">
-                        <label for="feedbackMessage">Mensaje de Retroalimentación *</label>
-                        <textarea id="feedbackMessage" name="feedbackMessage" rows="6" 
-                                  placeholder="Escribe aquí la retroalimentación detallada para el agente. Sé específico y constructivo..." required></textarea>
-                        <small class="form-hint">Incluye ejemplos específicos, impacto del error y recomendaciones de mejora</small>
-                    </div>
-
-                    <div class="form-group full-width">
-                        <label for="actionPlan">Plan de Acción / Compromisos</label>
-                        <textarea id="actionPlan" name="actionPlan" rows="4" 
-                                  placeholder="Define acciones específicas que el agente debe tomar para mejorar (opcional)"></textarea>
-                    </div>
-
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="followUpDate">Fecha de Seguimiento</label>
-                            <input type="date" id="followUpDate" name="followUpDate">
-                            <small class="form-hint">Fecha para revisar el progreso del agente</small>
-                        </div>
-
-                        <div class="form-group">
-                            <label for="priority">Prioridad</label>
-                            <select id="priority" name="priority">
-                                <option value="baja">Baja</option>
-                                <option value="media" selected>Media</option>
-                                <option value="alta">Alta</option>
-                            </select>
-                        </div>
+                        <label for="planAccion">Plan de Acción *</label>
+                        <textarea id="planAccion" name="planAccion" rows="4" 
+                                  placeholder="Describe el plan de acción..." required></textarea>
                     </div>
                 </div>
 
+                <!-- Auditorías Relacionadas -->
                 <div class="form-section">
-                    <h3 class="section-title">Errores Relacionados (Opcional)</h3>
-                    <p class="section-description">Selecciona las auditorías específicas que motivaron este feedback</p>
+                    <h3 class="section-title">Auditorías Relacionadas</h3>
+                    <p class="section-description">Selecciona las auditorías relacionadas</p>
                     
                     <div id="relatedCallsCheckboxes" class="checkbox-group">
-                        <!-- Se llenará dinámicamente -->
+                        <p class="info-text">Primero selecciona un agente para ver sus auditorías...</p>
+                    </div>
+                </div>
+
+                <!-- Matriz Disciplinaria -->
+                <div class="form-section">
+                    <h3 class="section-title">Matriz Disciplinaria</h3>
+                    
+                    <div class="form-group">
+                        <label for="matrizDisciplinaria">¿Aplica Matriz Disciplinaria? *</label>
+                        <select id="matrizDisciplinaria" name="matrizDisciplinaria" required>
+                            <option value="">Seleccionar...</option>
+                            <option value="Si">Sí</option>
+                            <option value="No">No</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Detalles de la Matriz Disciplinaria (se muestra solo si aplica) -->
+                <div class="form-section" id="matrizDetallesSection" style="display: none;">
+                    <h3 class="section-title">Detalles de la Matriz Disciplinaria</h3>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="tipoFalta">Tipo de Falta *</label>
+                            <select id="tipoFalta" name="tipoFalta">
+                                <option value="">Seleccionar tipo...</option>
+                                <option value="Disciplinaria">Disciplinaria</option>
+                                <option value="Desempeño">Desempeño</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="gravedad">Gravedad *</label>
+                            <select id="gravedad" name="gravedad">
+                                <option value="">Seleccionar gravedad...</option>
+                                <option value="Baja">Baja</option>
+                                <option value="Media">Media</option>
+                                <option value="Alta">Alta</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-group full-width">
+                        <label for="descripcionFalta">Descripción de la Falta *</label>
+                        <textarea id="descripcionFalta" name="descripcionFalta" rows="3" 
+                                  placeholder="Describe la falta..."></textarea>
+                    </div>
+
+                    <!-- Mensaje informativo sobre incidencia -->
+                    <div class="info-box" id="incidenciaInfo" style="display: none;">
+                        <p><strong>Selecciona un agente primero</strong></p>
+                        <p>Necesitas seleccionar un agente para determinar el nivel de incidencia.</p>
+                    </div>
+
+                    <!-- Incidencias -->
+                    <div id="incidenciasContainer" style="display: none;">
+                        <h4 class="subsection-title" id="incidenciaTitle">Incidencias</h4>
+                        
+                        <!-- Primera Incidencia -->
+                        <div class="form-group" id="primeraIncidencia" style="display: none;">
+                            <label for="accionPrimeraIncidencia">Primera Incidencia - Tipo de Acción *</label>
+                            <select id="accionPrimeraIncidencia" name="accionPrimeraIncidencia">
+                                <option value="">Seleccionar acción...</option>
+                                <option value="Advertencia escrita">Advertencia escrita</option>
+                                <option value="Llamado de atención">Llamado de atención</option>
+                                <option value="Suspensión">Suspensión</option>
+                                <option value="Terminación">Terminación</option>
+                            </select>
+                        </div>
+
+                        <!-- Segunda Incidencia -->
+                        <div class="form-group" id="segundaIncidencia" style="display: none;">
+                            <label for="accionSegundaIncidencia">Segunda Incidencia - Tipo de Acción *</label>
+                            <select id="accionSegundaIncidencia" name="accionSegundaIncidencia">
+                                <option value="">Seleccionar acción...</option>
+                                <option value="Advertencia escrita">Advertencia escrita</option>
+                                <option value="Llamado de atención">Llamado de atención</option>
+                                <option value="Suspensión">Suspensión</option>
+                                <option value="Terminación">Terminación</option>
+                            </select>
+                        </div>
+
+                        <!-- Tercera Incidencia -->
+                        <div class="form-group" id="terceraIncidencia" style="display: none;">
+                            <label for="accionTerceraIncidencia">Tercera Incidencia - Tipo de Acción *</label>
+                            <select id="accionTerceraIncidencia" name="accionTerceraIncidencia">
+                                <option value="">Seleccionar acción...</option>
+                                <option value="Advertencia escrita">Advertencia escrita</option>
+                                <option value="Llamado de atención">Llamado de atención</option>
+                                <option value="Suspensión">Suspensión</option>
+                                <option value="Terminación">Terminación</option>
+                            </select>
+                        </div>
+
+                        <!-- Cuarta Incidencia -->
+                        <div class="form-group" id="cuartaIncidencia" style="display: none;">
+                            <label for="accionCuartaIncidencia">Cuarta Incidencia - Tipo de Acción *</label>
+                            <select id="accionCuartaIncidencia" name="accionCuartaIncidencia">
+                                <option value="">Seleccionar acción...</option>
+                                <option value="Advertencia escrita">Advertencia escrita</option>
+                                <option value="Llamado de atención">Llamado de atención</option>
+                                <option value="Suspensión">Suspensión</option>
+                                <option value="Terminación">Terminación</option>
+                            </select>
+                        </div>
                     </div>
                 </div>
 
