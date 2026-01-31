@@ -322,7 +322,7 @@ async function renderStrikesSection(agentId, feedbacks) {
         const currentProject = getCurrentProject();
         
         // Obtener strikes del agente desde Supabase
-        const { data: strikes, error } = await supabaseClient
+        const { data: strikes, error } = await supabase
             .from('strikes')
             .select('*')
             .eq('agent_id', agentId)

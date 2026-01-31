@@ -55,10 +55,12 @@ function setupEventListeners() {
     // Cuando cambia la matriz disciplinaria
     document.getElementById('matrizDisciplinaria').addEventListener('change', async function() {
         const matrizDetalles = document.getElementById('matrizDetallesSection');
+        const strikeSection = document.getElementById('strikeSection');
         const incidenciasContainer = document.getElementById('incidenciasContainer');
         
         if (this.value === 'Si') {
             matrizDetalles.style.display = 'block';
+            strikeSection.style.display = 'block'; // Mostrar selector de strike
             
             const agentId = document.getElementById('feedbackAgentId').value;
             if (agentId) {
@@ -74,14 +76,17 @@ function setupEventListeners() {
             document.getElementById('tipoFalta').required = true;
             document.getElementById('gravedad').required = true;
             document.getElementById('descripcionFalta').required = true;
+            document.getElementById('strikeLevel').required = true; // Strike requerido
         } else {
             matrizDetalles.style.display = 'none';
+            strikeSection.style.display = 'none'; // Ocultar selector de strike
             incidenciasContainer.style.display = 'none';
             
             // Quitar requeridos
             document.getElementById('tipoFalta').required = false;
             document.getElementById('gravedad').required = false;
             document.getElementById('descripcionFalta').required = false;
+            document.getElementById('strikeLevel').required = false; // Strike no requerido
         }
     });
 }
@@ -245,6 +250,9 @@ async function handleSubmit(e) {
             numeroIncidencia: currentIncidenciaLevel
         };
         
+        // Obtener el nivel de strike seleccionado
+        formData.strikeLevel = parseInt(document.getElementById('strikeLevel').value);
+        
         // Obtener la acción de incidencia correspondiente
         let accionIncidencia = '';
         switch(currentIncidenciaLevel) {
@@ -275,7 +283,7 @@ async function handleSubmit(e) {
     }
 }
 
-// Guardar feedback y generar strike automáticamente si aplica
+// Guardar feedback y generar strike si aplica
 async function saveFeedback(formData) {
     const currentProject = getCurrentProject();
     
@@ -298,70 +306,60 @@ async function saveFeedback(formData) {
         related_audits: formData.relatedCallIds || []
     };
     
+    console.log('Guardando feedback:', feedbackData);
+    
     // Insertar feedback en Supabase
-    const { data: feedback, error: feedbackError } = await supabaseClient
+    const { data: feedback, error: feedbackError } = await supabase
         .from('feedbacks')
         .insert([feedbackData])
         .select()
         .single();
     
-    if (feedbackError) throw feedbackError;
+    if (feedbackError) {
+        console.error('Error al guardar feedback:', feedbackError);
+        throw feedbackError;
+    }
     
-    // Si aplica matriz disciplinaria, generar strike automáticamente
-    if (formData.matrizDisciplinaria) {
+    console.log('Feedback guardado exitosamente:', feedback);
+    
+    // Si aplica matriz disciplinaria y tiene strike seleccionado, generar strike
+    if (formData.matrizDisciplinaria && formData.strikeLevel) {
         await generateStrike(formData, feedback.id);
     }
     
     return feedback;
 }
 
-// Generar strike automáticamente basado en reincidencias
+// Generar strike manualmente según selección del usuario
 async function generateStrike(formData, feedbackId) {
     const currentProject = getCurrentProject();
-    const agentId = formData.agentId;
-    
-    // Obtener todos los feedbacks con matriz disciplinaria del agente
-    const { data: feedbacksWithMatriz, error: feedbacksError } = await supabaseClient
-        .from('feedbacks')
-        .select('id, numero_incidencia')
-        .eq('agent_id', agentId)
-        .eq('project', currentProject)
-        .eq('matriz_disciplinaria', 'Si');
-    
-    if (feedbacksError) throw feedbacksError;
-    
-    // Determinar el nivel de strike según número de incidencias
-    // Strike 1: Primera y segunda incidencia
-    // Strike 2: Tercera incidencia
-    // Strike 3: Cuarta incidencia
-    const incidenciaLevel = formData.matrizDisciplinaria.numeroIncidencia;
-    let strikeLevel = 1;
-    
-    if (incidenciaLevel === 3) {
-        strikeLevel = 2;
-    } else if (incidenciaLevel === 4) {
-        strikeLevel = 3;
-    }
     
     // Preparar datos del strike
     const strikeData = {
-        agent_id: agentId,
+        agent_id: formData.agentId,
         project: currentProject,
-        strike_level: strikeLevel,
+        strike_level: formData.strikeLevel, // Nivel seleccionado manualmente
         feedback_id: feedbackId,
         feedback_description: `${formData.matrizDisciplinaria.tipoFalta} - ${formData.matrizDisciplinaria.descripcionFalta}`,
         aplica_matriz: 'Si',
         accionable: formData.matrizDisciplinaria.accionIncidencia
     };
     
+    console.log('Guardando strike:', strikeData);
+    
     // Insertar strike en Supabase
-    const { data: strike, error: strikeError } = await supabaseClient
+    const { data: strike, error: strikeError } = await supabase
         .from('strikes')
         .insert([strikeData])
         .select()
         .single();
     
-    if (strikeError) throw strikeError;
+    if (strikeError) {
+        console.error('Error al guardar strike:', strikeError);
+        throw strikeError;
+    }
+    
+    console.log('Strike guardado exitosamente:', strike);
     
     return strike;
 }
