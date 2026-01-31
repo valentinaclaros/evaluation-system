@@ -70,9 +70,12 @@ function setupEventListeners() {
             
             const agentId = document.getElementById('feedbackAgentId').value;
             if (agentId) {
+                // Agente ya seleccionado, proceder con análisis
                 incidenciaInfo.style.display = 'none';
+                incidenciasContainer.style.display = 'block';
                 await analizarIncidenciasAgente(agentId);
             } else {
+                // No hay agente, mostrar mensaje
                 incidenciaInfo.style.display = 'block';
                 incidenciasContainer.style.display = 'none';
             }
