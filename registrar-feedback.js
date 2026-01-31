@@ -15,24 +15,17 @@ document.addEventListener('DOMContentLoaded', async function() {
 async function loadAgentsDropdown() {
     const agents = await getAgents();
     const selectAgente = document.getElementById('feedbackAgentId');
-    const selectInvolucrados = document.getElementById('agentesInvolucrados');
     
     selectAgente.innerHTML = '<option value="">Seleccionar agente...</option>';
-    selectInvolucrados.innerHTML = '<option value="">Seleccionar agente...</option>';
     
     if (agents.length === 0) {
         selectAgente.innerHTML += '<option value="" disabled>No hay agentes registrados</option>';
     } else {
         agents.forEach(agent => {
-            const option1 = document.createElement('option');
-            option1.value = agent.id;
-            option1.textContent = agent.name;
-            selectAgente.appendChild(option1);
-
-            const option2 = document.createElement('option');
-            option2.value = agent.id;
-            option2.textContent = agent.name;
-            selectInvolucrados.appendChild(option2);
+            const option = document.createElement('option');
+            option.value = agent.id;
+            option.textContent = agent.name;
+            selectAgente.appendChild(option);
         });
     }
 }
@@ -62,7 +55,6 @@ function setupEventListeners() {
     // Cuando cambia la matriz disciplinaria
     document.getElementById('matrizDisciplinaria').addEventListener('change', async function() {
         const matrizDetalles = document.getElementById('matrizDetallesSection');
-        const incidenciaInfo = document.getElementById('incidenciaInfo');
         const incidenciasContainer = document.getElementById('incidenciasContainer');
         
         if (this.value === 'Si') {
@@ -71,12 +63,10 @@ function setupEventListeners() {
             const agentId = document.getElementById('feedbackAgentId').value;
             if (agentId) {
                 // Agente ya seleccionado, proceder con análisis
-                incidenciaInfo.style.display = 'none';
                 incidenciasContainer.style.display = 'block';
                 await analizarIncidenciasAgente(agentId);
             } else {
-                // No hay agente, mostrar mensaje
-                incidenciaInfo.style.display = 'block';
+                // No hay agente, ocultar incidencias
                 incidenciasContainer.style.display = 'none';
             }
 
@@ -86,7 +76,6 @@ function setupEventListeners() {
             document.getElementById('descripcionFalta').required = true;
         } else {
             matrizDetalles.style.display = 'none';
-            incidenciaInfo.style.display = 'none';
             incidenciasContainer.style.display = 'none';
             
             // Quitar requeridos
@@ -216,7 +205,6 @@ async function handleSubmit(e) {
         givenBy: document.getElementById('feedbackGivenBy').value,
         feedbackDate: document.getElementById('feedbackDate').value,
         feedbackType: document.getElementById('feedbackType').value,
-        agentesInvolucrados: document.getElementById('agentesInvolucrados').value,
         channel: document.getElementById('channel').value,
         owner: document.getElementById('owner').value,
         message: document.getElementById('planAccion').value,
