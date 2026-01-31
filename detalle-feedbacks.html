@@ -224,6 +224,106 @@
             font-family: inherit;
         }
         
+        /* Sistema de Strikes */
+        .strikes-section {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 1.5rem;
+            border-radius: var(--border-radius-sm);
+            margin-top: 1.5rem;
+            color: white;
+        }
+        
+        .strikes-title {
+            font-size: 1.2rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .strikes-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1rem;
+        }
+        
+        .strike-card {
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(10px);
+            border-radius: var(--border-radius-sm);
+            padding: 1.25rem;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            transition: var(--transition);
+        }
+        
+        .strike-card:hover {
+            background: rgba(255, 255, 255, 0.25);
+            transform: translateY(-2px);
+        }
+        
+        .strike-header {
+            font-size: 1.1rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .strike-detail {
+            background: rgba(0, 0, 0, 0.1);
+            padding: 0.75rem;
+            border-radius: 6px;
+            margin-bottom: 0.75rem;
+        }
+        
+        .strike-label {
+            font-size: 0.85rem;
+            opacity: 0.9;
+            margin-bottom: 0.25rem;
+        }
+        
+        .strike-value {
+            font-size: 0.95rem;
+            font-weight: 600;
+        }
+        
+        .strike-badge {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 12px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            background: rgba(255, 255, 255, 0.3);
+        }
+        
+        .strike-badge.matriz-si {
+            background: #27ae60;
+        }
+        
+        .strike-badge.matriz-no {
+            background: #e74c3c;
+        }
+        
+        .accionable-badge {
+            display: inline-block;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            font-weight: 700;
+            background: rgba(255, 255, 255, 0.25);
+            margin-top: 0.5rem;
+        }
+        
+        .no-strikes {
+            text-align: center;
+            padding: 2rem;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: var(--border-radius-sm);
+            font-size: 1rem;
+        }
+        
         /* Responsivo */
         @media (max-width: 768px) {
             .agent-stats {
@@ -236,6 +336,10 @@
             
             .agent-name {
                 font-size: 1.1rem;
+            }
+            
+            .strikes-container {
+                grid-template-columns: 1fr;
             }
         }
     </style>

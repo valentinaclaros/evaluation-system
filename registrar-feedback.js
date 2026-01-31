@@ -275,6 +275,97 @@ async function handleSubmit(e) {
     }
 }
 
+// Guardar feedback y generar strike automáticamente si aplica
+async function saveFeedback(formData) {
+    const currentProject = getCurrentProject();
+    
+    // Preparar datos del feedback para Supabase
+    const feedbackData = {
+        agent_id: formData.agentId,
+        feedback_date: formData.feedbackDate,
+        feedback_given_by: formData.givenBy,
+        type: formData.feedbackType,
+        plan_accion: formData.message,
+        channel: formData.channel,
+        owner: formData.owner,
+        project: currentProject,
+        matriz_disciplinaria: formData.matrizDisciplinaria ? 'Si' : 'No',
+        tipo_falta: formData.matrizDisciplinaria?.tipoFalta || null,
+        gravedad: formData.matrizDisciplinaria?.gravedad || null,
+        descripcion_falta: formData.matrizDisciplinaria?.descripcionFalta || null,
+        numero_incidencia: formData.matrizDisciplinaria?.numeroIncidencia || null,
+        accion_incidencia: formData.matrizDisciplinaria?.accionIncidencia || null,
+        related_audits: formData.relatedCallIds || []
+    };
+    
+    // Insertar feedback en Supabase
+    const { data: feedback, error: feedbackError } = await supabaseClient
+        .from('feedbacks')
+        .insert([feedbackData])
+        .select()
+        .single();
+    
+    if (feedbackError) throw feedbackError;
+    
+    // Si aplica matriz disciplinaria, generar strike automáticamente
+    if (formData.matrizDisciplinaria) {
+        await generateStrike(formData, feedback.id);
+    }
+    
+    return feedback;
+}
+
+// Generar strike automáticamente basado en reincidencias
+async function generateStrike(formData, feedbackId) {
+    const currentProject = getCurrentProject();
+    const agentId = formData.agentId;
+    
+    // Obtener todos los feedbacks con matriz disciplinaria del agente
+    const { data: feedbacksWithMatriz, error: feedbacksError } = await supabaseClient
+        .from('feedbacks')
+        .select('id, numero_incidencia')
+        .eq('agent_id', agentId)
+        .eq('project', currentProject)
+        .eq('matriz_disciplinaria', 'Si');
+    
+    if (feedbacksError) throw feedbacksError;
+    
+    // Determinar el nivel de strike según número de incidencias
+    // Strike 1: Primera y segunda incidencia
+    // Strike 2: Tercera incidencia
+    // Strike 3: Cuarta incidencia
+    const incidenciaLevel = formData.matrizDisciplinaria.numeroIncidencia;
+    let strikeLevel = 1;
+    
+    if (incidenciaLevel === 3) {
+        strikeLevel = 2;
+    } else if (incidenciaLevel === 4) {
+        strikeLevel = 3;
+    }
+    
+    // Preparar datos del strike
+    const strikeData = {
+        agent_id: agentId,
+        project: currentProject,
+        strike_level: strikeLevel,
+        feedback_id: feedbackId,
+        feedback_description: `${formData.matrizDisciplinaria.tipoFalta} - ${formData.matrizDisciplinaria.descripcionFalta}`,
+        aplica_matriz: 'Si',
+        accionable: formData.matrizDisciplinaria.accionIncidencia
+    };
+    
+    // Insertar strike en Supabase
+    const { data: strike, error: strikeError } = await supabaseClient
+        .from('strikes')
+        .insert([strikeData])
+        .select()
+        .single();
+    
+    if (strikeError) throw strikeError;
+    
+    return strike;
+}
+
 // Mostrar mensaje de éxito
 function showSuccess(message) {
     const successDiv = document.getElementById('successMessage');

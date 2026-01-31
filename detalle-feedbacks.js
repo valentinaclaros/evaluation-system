@@ -153,7 +153,9 @@ async function loadAgentsWithFeedbacks() {
     agentsWithData.sort((a, b) => b.totalFeedbacks - a.totalFeedbacks);
     
     // Generar HTML
-    container.innerHTML = agentsWithData.map(agentData => `
+    const htmlPromises = agentsWithData.map(async agentData => {
+        const strikesSection = await renderStrikesSection(agentData.agent.id, agentData.feedbacks);
+        return `
         <div class="agent-card">
             <div class="agent-header" onclick="toggleAgentFeedbacks('${agentData.agent.id}')">
                 <div class="agent-info">
@@ -180,10 +182,14 @@ async function loadAgentsWithFeedbacks() {
                 <div class="expand-icon" id="icon-${agentData.agent.id}">▼</div>
             </div>
             <div class="agent-feedbacks" id="feedbacks-${agentData.agent.id}">
+                ${strikesSection}
                 ${renderFeedbacks(agentData.feedbacks)}
             </div>
         </div>
-    `).join('');
+        `;
+    });
+    
+    container.innerHTML = (await Promise.all(htmlPromises)).join('');
 }
 
 // Alternar visualización de feedbacks de un agente
@@ -305,3 +311,141 @@ async function clearFilters() {
     
     await loadAgentsWithFeedbacks();
 }
+
+// ===================================
+// Sistema de Strikes por Reincidencias
+// ===================================
+
+// Renderizar sección de strikes para un agente
+async function renderStrikesSection(agentId, feedbacks) {
+    try {
+        const currentProject = getCurrentProject();
+        
+        // Obtener strikes del agente desde Supabase
+        const { data: strikes, error } = await supabaseClient
+            .from('strikes')
+            .select('*')
+            .eq('agent_id', agentId)
+            .eq('project', currentProject)
+            .order('created_at', { ascending: false });
+        
+        if (error) throw error;
+        
+        // Si no hay strikes, mostrar mensaje
+        if (!strikes || strikes.length === 0) {
+            return `
+                <div class="strikes-section">
+                    <div class="strikes-title">
+                        ⚠️ Sistema de Strikes por Reincidencias
+                    </div>
+                    <div class="no-strikes">
+                        Este agente no tiene strikes registrados.
+                    </div>
+                </div>
+            `;
+        }
+        
+        // Agrupar strikes por nivel
+        const strikesByLevel = {
+            1: strikes.filter(s => s.strike_level === 1),
+            2: strikes.filter(s => s.strike_level === 2),
+            3: strikes.filter(s => s.strike_level === 3)
+        };
+        
+        // Renderizar strikes
+        const strikesHTML = [1, 2, 3].map(level => {
+            const levelStrikes = strikesByLevel[level];
+            
+            if (levelStrikes.length === 0) {
+                return `
+                    <div class="strike-card">
+                        <div class="strike-header">
+                            ${getStrikeIcon(level)} Strike ${level}
+                        </div>
+                        <div class="strike-detail">
+                            <div class="strike-label">Estado</div>
+                            <div class="strike-value">Sin registro</div>
+                        </div>
+                    </div>
+                `;
+            }
+            
+            // Mostrar el strike más reciente de este nivel
+            const strike = levelStrikes[0];
+            
+            return `
+                <div class="strike-card">
+                    <div class="strike-header">
+                        ${getStrikeIcon(level)} Strike ${level}
+                    </div>
+                    <div class="strike-detail">
+                        <div class="strike-label">Feedback Relacionado</div>
+                        <div class="strike-value">${strike.feedback_description || 'N/A'}</div>
+                    </div>
+                    <div class="strike-detail">
+                        <div class="strike-label">Aplica Matriz</div>
+                        <span class="strike-badge matriz-${strike.aplica_matriz === 'Si' ? 'si' : 'no'}">
+                            ${strike.aplica_matriz === 'Si' ? '✓ Sí' : '✗ No'}
+                        </span>
+                    </div>
+                    <div class="strike-detail">
+                        <div class="strike-label">Accionable</div>
+                        <div class="accionable-badge">
+                            ${getAccionableIcon(strike.accionable)} ${strike.accionable}
+                        </div>
+                    </div>
+                    <div class="strike-detail">
+                        <div class="strike-label">Fecha</div>
+                        <div class="strike-value">${formatDate(strike.created_at)}</div>
+                    </div>
+                </div>
+            `;
+        }).join('');
+        
+        return `
+            <div class="strikes-section">
+                <div class="strikes-title">
+                    ⚠️ Sistema de Strikes por Reincidencias
+                </div>
+                <div class="strikes-container">
+                    ${strikesHTML}
+                </div>
+            </div>
+        `;
+        
+    } catch (error) {
+        console.error('Error al cargar strikes:', error);
+        return `
+            <div class="strikes-section">
+                <div class="strikes-title">
+                    ⚠️ Sistema de Strikes por Reincidencias
+                </div>
+                <div class="no-strikes">
+                    Error al cargar los strikes del agente.
+                </div>
+            </div>
+        `;
+    }
+}
+
+// Obtener ícono según nivel de strike
+function getStrikeIcon(level) {
+    const icons = {
+        1: '⚠️',
+        2: '🔴',
+        3: '🚨'
+    };
+    return icons[level] || '⚠️';
+}
+
+// Obtener ícono según accionable
+function getAccionableIcon(accionable) {
+    const icons = {
+        'Advertencia verbal': '💬',
+        'Advertencia escrita': '📝',
+        'Terminación': '🚫',
+        'Citación a descargos': '⚖️'
+    };
+    return icons[accionable] || '📋';
+}
+
