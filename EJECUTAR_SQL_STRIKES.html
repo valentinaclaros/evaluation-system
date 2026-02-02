@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ejecutar SQL - Crear Tabla Strikes</title>
+    <style>
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+            margin: 0;
+        }
+        
+        .container {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            padding: 3rem;
+            max-width: 600px;
+            width: 100%;
+        }
+        
+        h1 {
+            color: #667eea;
+            margin-bottom: 1rem;
+            font-size: 2rem;
+        }
+        
+        p {
+            color: #666;
+            line-height: 1.6;
+            margin-bottom: 2rem;
+        }
+        
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 1rem 2rem;
+            font-size: 1.1rem;
+            font-weight: 600;
+            border-radius: 8px;
+            cursor: pointer;
+            width: 100%;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
+        }
+        
+        .btn:active {
+            transform: translateY(0);
+        }
+        
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+        
+        .status {
+            margin-top: 2rem;
+            padding: 1.5rem;
+            border-radius: 8px;
+            display: none;
+        }
+        
+        .status.loading {
+            display: block;
+            background: #fff3cd;
+            color: #856404;
+            border: 2px solid #ffc107;
+        }
+        
+        .status.success {
+            display: block;
+            background: #d4edda;
+            color: #155724;
+            border: 2px solid #28a745;
+        }
+        
+        .status.error {
+            display: block;
+            background: #f8d7da;
+            color: #721c24;
+            border: 2px solid #dc3545;
+        }
+        
+        .spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(0,0,0,0.1);
+            border-radius: 50%;
+            border-top-color: #856404;
+            animation: spin 1s linear infinite;
+            margin-right: 0.5rem;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        .details {
+            margin-top: 1rem;
+            padding: 1rem;
+            background: rgba(0,0,0,0.05);
+            border-radius: 6px;
+            font-size: 0.9rem;
+            font-family: monospace;
+            white-space: pre-wrap;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 Crear Tabla de Strikes</h1>
+        <p>
+            Este script creará automáticamente la tabla <strong>strikes</strong> en tu base de datos de Supabase.
+            <br><br>
+            <strong>⚠️ Solo necesitas hacer esto UNA VEZ.</strong>
+        </p>
+        
+        <button id="executeBtn" class="btn" onclick="ejecutarSQL()">
+            ▶️ Ejecutar SQL
+        </button>
+        
+        <div id="status" class="status"></div>
+    </div>
+
+    <!-- Supabase SDK -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.0/dist/umd/supabase.min.js"></script>
+    <script src="supabase-config.js"></script>
+    
+    <script>
+        async function ejecutarSQL() {
+            const btn = document.getElementById('executeBtn');
+            const statusDiv = document.getElementById('status');
+            
+            // Deshabilitar botón
+            btn.disabled = true;
+            
+            // Mostrar estado de carga
+            statusDiv.className = 'status loading';
+            statusDiv.innerHTML = `
+                <div class="spinner"></div>
+                <strong>Ejecutando SQL...</strong>
+                <div class="details">Por favor espera mientras se crea la tabla de strikes.</div>
+            `;
+            
+            try {
+                // Ejecutar el SQL usando la API de Supabase
+                const { data, error } = await supabase.rpc('exec_sql', {
+                    query: `
+                        CREATE TABLE IF NOT EXISTS strikes (
+                            id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+                            agent_id UUID NOT NULL,
+                            project TEXT NOT NULL,
+                            strike_level INTEGER NOT NULL CHECK (strike_level BETWEEN 1 AND 3),
+                            feedback_id UUID,
+                            feedback_description TEXT,
+                            aplica_matriz TEXT CHECK (aplica_matriz IN ('Si', 'No')),
+                            accionable TEXT CHECK (accionable IN (
+                                'Advertencia verbal',
+                                'Advertencia escrita',
+                                'Terminación',
+                                'Citación a descargos'
+                            )),
+                            created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+                            updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+                        );
+                        
+                        CREATE INDEX IF NOT EXISTS idx_strikes_agent_id ON strikes(agent_id);
+                        CREATE INDEX IF NOT EXISTS idx_strikes_project ON strikes(project);
+                        CREATE INDEX IF NOT EXISTS idx_strikes_strike_level ON strikes(strike_level);
+                        CREATE INDEX IF NOT EXISTS idx_strikes_feedback_id ON strikes(feedback_id);
+                        CREATE INDEX IF NOT EXISTS idx_strikes_created_at ON strikes(created_at DESC);
+                        
+                        ALTER TABLE strikes DISABLE ROW LEVEL SECURITY;
+                    `
+                });
+                
+                if (error) {
+                    // Si falla con RPC, intentar método alternativo
+                    console.log('RPC no disponible, intentando método alternativo...');
+                    await crearTablaAlternativo();
+                } else {
+                    mostrarExito();
+                }
+                
+            } catch (error) {
+                console.error('Error:', error);
+                // Intentar método alternativo
+                await crearTablaAlternativo();
+            }
+        }
+        
+        async function crearTablaAlternativo() {
+            try {
+                // Intentar insertar un registro de prueba para verificar si la tabla existe
+                const { error: testError } = await supabase
+                    .from('strikes')
+                    .select('id')
+                    .limit(1);
+                
+                if (testError) {
+                    // La tabla no existe, mostrar instrucciones manuales
+                    mostrarInstruccionesManual();
+                } else {
+                    // La tabla ya existe
+                    mostrarExito('La tabla ya existe en tu base de datos.');
+                }
+                
+            } catch (error) {
+                mostrarInstruccionesManual();
+            }
+        }
+        
+        function mostrarExito(mensaje = 'Tabla de strikes creada exitosamente.') {
+            const btn = document.getElementById('executeBtn');
+            const statusDiv = document.getElementById('status');
+            
+            statusDiv.className = 'status success';
+            statusDiv.innerHTML = `
+                <strong>✅ ¡Éxito!</strong>
+                <div class="details">${mensaje}
+                
+<strong>Próximos pasos:</strong>
+1. Cierra esta ventana
+2. Recarga tu aplicación con Ctrl+Shift+R
+3. Registra un feedback con matriz disciplinaria
+4. Ve a "Detalle de Feedbacks" para ver los strikes</div>
+            `;
+            
+            btn.textContent = '✅ Completado';
+            btn.style.background = '#28a745';
+        }
+        
+        function mostrarInstruccionesManual() {
+            const btn = document.getElementById('executeBtn');
+            const statusDiv = document.getElementById('status');
+            
+            btn.disabled = false;
+            statusDiv.className = 'status error';
+            statusDiv.innerHTML = `
+                <strong>⚠️ Ejecución Manual Requerida</strong>
+                <div class="details">No se pudo crear la tabla automáticamente.
+                
+<strong>Por favor sigue estos pasos:</strong>
+
+1. Ve a: https://supabase.com
+2. Abre tu proyecto
+3. Ve a "SQL Editor" en el menú lateral
+4. Haz clic en "New query"
+5. Copia y pega el código del archivo: CREAR_TABLA_STRIKES.sql
+6. Haz clic en "Run" o presiona Ctrl+Enter
+
+Después de ejecutar el SQL, recarga tu aplicación.</div>
+            `;
+            
+            btn.textContent = '🔄 Intentar de nuevo';
+        }
+    </script>
+</body>
+</html>
