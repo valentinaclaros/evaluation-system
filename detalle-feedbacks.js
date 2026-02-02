@@ -285,6 +285,9 @@ function editFeedbackFromDetail(feedbackId) {
 // Eliminar feedback desde el detalle
 async function deleteFeedbackFromDetail(feedbackId) {
     if (confirm('¿Estás seguro de que deseas eliminar este feedback?\n\nEsta acción no se puede deshacer.')) {
+        // Guardar la posición actual del scroll
+        const scrollPosition = window.scrollY;
+        
         // Guardar qué agentes están expandidos ANTES de eliminar
         const expandedAgents = [];
         document.querySelectorAll('.agent-feedbacks.expanded').forEach(element => {
@@ -305,6 +308,9 @@ async function deleteFeedbackFromDetail(feedbackId) {
                     icon.classList.add('expanded');
                 }
             });
+            
+            // Restaurar la posición del scroll
+            window.scrollTo(0, scrollPosition);
         }, 100);
         
         alert('✅ Feedback eliminado correctamente');
