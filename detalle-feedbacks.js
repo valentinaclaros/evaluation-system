@@ -285,8 +285,28 @@ function editFeedbackFromDetail(feedbackId) {
 // Eliminar feedback desde el detalle
 async function deleteFeedbackFromDetail(feedbackId) {
     if (confirm('¿Estás seguro de que deseas eliminar este feedback?\n\nEsta acción no se puede deshacer.')) {
+        // Guardar qué agentes están expandidos ANTES de eliminar
+        const expandedAgents = [];
+        document.querySelectorAll('.agent-feedbacks.expanded').forEach(element => {
+            const agentId = element.id.replace('feedbacks-', '');
+            expandedAgents.push(agentId);
+        });
+        
         await deleteFeedback(feedbackId);
         await loadAgentsWithFeedbacks();
+        
+        // Restaurar los agentes que estaban expandidos DESPUÉS de recargar
+        setTimeout(() => {
+            expandedAgents.forEach(agentId => {
+                const feedbacksContainer = document.getElementById(`feedbacks-${agentId}`);
+                const icon = document.getElementById(`icon-${agentId}`);
+                if (feedbacksContainer && icon) {
+                    feedbacksContainer.classList.add('expanded');
+                    icon.classList.add('expanded');
+                }
+            });
+        }, 100);
+        
         alert('✅ Feedback eliminado correctamente');
     }
 }
