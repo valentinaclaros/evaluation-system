@@ -1114,7 +1114,7 @@ function createHoldVsErrorsChart(audits) {
 }
 
 // Gráfico de motivos de cancelación
-function createCancelMotivesChart(audits) {
+async function createCancelMotivesChart(audits) {
     const canvas = document.getElementById('cancelMotivesChart');
     const ctx = canvas.getContext('2d');
     
@@ -1122,30 +1122,39 @@ function createCancelMotivesChart(audits) {
         charts.cancelMotives.destroy();
     }
     
+    // Obtener strikes desde Supabase
+    const { data: strikes, error } = await supabase
+        .from('strikes')
+        .select('tipo_cancelacion');
+    
+    if (error) {
+        console.error('Error al obtener strikes:', error);
+        return;
+    }
+    
+    // Contar por tipo de cancelación
     const motives = {
-        'cancelacion_cuenta_ahorros': 'Cuenta Ahorros',
-        'cancelacion_tarjeta_credito': 'Tarjeta Crédito',
-        'cancelacion_multiproducto': 'Multiproducto',
-        'nu_plus': 'Nu Plus',
-        'certificados': 'Certificados'
+        'Cuenta de Ahorros': 0,
+        'Tarjeta de Crédito': 0,
+        'Multiproducto': 0
     };
     
-    const data = Object.keys(motives).map(key => {
-        return audits.filter(a => a.callType === key).length;
+    strikes.forEach(strike => {
+        if (strike.tipo_cancelacion && motives.hasOwnProperty(strike.tipo_cancelacion)) {
+            motives[strike.tipo_cancelacion]++;
+        }
     });
     
     charts.cancelMotives = new Chart(ctx, {
         type: 'pie',
         data: {
-            labels: Object.values(motives),
+            labels: Object.keys(motives),
             datasets: [{
-                data: data,
+                data: Object.values(motives),
                 backgroundColor: [
                     'rgba(99, 102, 241, 0.8)',
                     'rgba(139, 92, 246, 0.8)',
-                    'rgba(236, 72, 153, 0.8)',
-                    'rgba(245, 158, 11, 0.8)',
-                    'rgba(59, 130, 246, 0.8)'
+                    'rgba(236, 72, 153, 0.8)'
                 ],
                 borderWidth: 2,
                 borderColor: '#fff'
@@ -1164,7 +1173,7 @@ function createCancelMotivesChart(audits) {
 }
 
 // Gráfico motivo vs errores
-function createMotivoVsErrorsChart(audits) {
+async function createMotivoVsErrorsChart(audits) {
     const canvas = document.getElementById('motivoVsErrorsChart');
     const ctx = canvas.getContext('2d');
     
@@ -1172,18 +1181,27 @@ function createMotivoVsErrorsChart(audits) {
         charts.motivoVsErrors.destroy();
     }
     
+    // Obtener strikes desde Supabase
+    const { data: strikes, error } = await supabase
+        .from('strikes')
+        .select('tipo_cancelacion, aplica_matriz');
+    
+    if (error) {
+        console.error('Error al obtener strikes:', error);
+        return;
+    }
+    
     const motives = {
-        'cancelacion_cuenta_ahorros': 'CA',
-        'cancelacion_tarjeta_credito': 'TC',
-        'cancelacion_multiproducto': 'Multi',
-        'nu_plus': 'Nu+',
-        'certificados': 'Cert'
+        'Cuenta de Ahorros': 'CA',
+        'Tarjeta de Crédito': 'TC',
+        'Multiproducto': 'Multi'
     };
     
+    // Calcular % de errores por tipo
     const errorRates = Object.keys(motives).map(key => {
-        const typeAudits = audits.filter(a => a.callType === key);
-        const errors = typeAudits.filter(a => a.criticality === 'critico' || a.criticality === 'alto').length;
-        return typeAudits.length > 0 ? ((errors / typeAudits.length) * 100).toFixed(1) : 0;
+        const typeStrikes = strikes.filter(s => s.tipo_cancelacion === key);
+        const withErrors = typeStrikes.filter(s => s.aplica_matriz === 'Si').length;
+        return typeStrikes.length > 0 ? ((withErrors / typeStrikes.length) * 100).toFixed(1) : 0;
     });
     
     charts.motivoVsErrors = new Chart(ctx, {
