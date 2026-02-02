@@ -223,6 +223,7 @@ async function handleSubmit(e) {
         agentId: document.getElementById('feedbackAgentId').value,
         givenBy: document.getElementById('feedbackGivenBy').value,
         feedbackDate: document.getElementById('feedbackDate').value,
+        tipoCancelacion: document.getElementById('tipoCancelacion').value,
         feedbackType: document.getElementById('feedbackType').value,
         channel: document.getElementById('channel').value,
         owner: document.getElementById('owner').value,
@@ -344,6 +345,7 @@ async function generateStrike(formData, feedbackId) {
         accionable: accionable,
         // Campos adicionales para guardar info del formulario
         tipo_feedback: formData.feedbackType,
+        tipo_cancelacion: formData.tipoCancelacion, // NUEVO: guardar tipo de cancelación
         channel: formData.channel,
         owner: formData.owner
     };
