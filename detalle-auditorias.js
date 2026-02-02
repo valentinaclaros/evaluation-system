@@ -19,6 +19,83 @@ let currentFilters = {
     bpo: ''
 };
 
+// Array para guardar los IDs seleccionados
+let selectedAudits = [];
+
+// Actualizar contador de seleccionados
+function updateBulkActionsBar() {
+    const bulkBar = document.getElementById('bulkActionsBar');
+    const countSpan = document.getElementById('selectedCount');
+    
+    if (selectedAudits.length > 0) {
+        bulkBar.classList.add('active');
+        countSpan.textContent = `${selectedAudits.length} seleccionado${selectedAudits.length > 1 ? 's' : ''}`;
+    } else {
+        bulkBar.classList.remove('active');
+    }
+}
+
+// Manejar selección de checkbox
+function toggleAuditSelection(auditId, checkbox) {
+    const auditCard = checkbox.closest('.audit-item');
+    
+    if (checkbox.checked) {
+        if (!selectedAudits.includes(auditId)) {
+            selectedAudits.push(auditId);
+            auditCard.classList.add('selected');
+        }
+    } else {
+        selectedAudits = selectedAudits.filter(id => id !== auditId);
+        auditCard.classList.remove('selected');
+    }
+    
+    updateBulkActionsBar();
+}
+
+// Deseleccionar todo
+function deselectAll() {
+    selectedAudits = [];
+    document.querySelectorAll('.audit-checkbox').forEach(cb => {
+        cb.checked = false;
+    });
+    document.querySelectorAll('.audit-item').forEach(card => {
+        card.classList.remove('selected');
+    });
+    updateBulkActionsBar();
+}
+
+// Eliminar seleccionados
+async function deleteSelected() {
+    if (selectedAudits.length === 0) {
+        alert('No hay auditorías seleccionadas');
+        return;
+    }
+    
+    const confirmMsg = `¿Estás seguro de que deseas eliminar ${selectedAudits.length} auditoría${selectedAudits.length > 1 ? 's' : ''}?\n\nEsta acción no se puede deshacer.`;
+    
+    if (!confirm(confirmMsg)) {
+        return;
+    }
+    
+    try {
+        // Eliminar cada auditoría
+        for (const auditId of selectedAudits) {
+            await deleteAudit(auditId);
+        }
+        
+        // Limpiar selección
+        selectedAudits = [];
+        updateBulkActionsBar();
+        
+        // Recargar lista
+        await loadAgentsWithAudits();
+        
+        alert(`✅ ${selectedAudits.length > 1 ? 'Auditorías eliminadas' : 'Auditoría eliminada'} correctamente`);
+    } catch (error) {
+        alert('Error al eliminar las auditorías: ' + error.message);
+    }
+}
+
 // Cargar datos al iniciar
 document.addEventListener('DOMContentLoaded', async function() {
     // Establecer fechas por defecto (últimos 30 días)
@@ -246,8 +323,19 @@ function renderAudits(audits) {
             errorsList = audit.errorDescription.split(';').map(e => e.trim()).filter(e => e);
         }
         
+        const isSelected = selectedAudits.includes(audit.id);
+        
         return `
-        <div class="audit-item" data-audit-id="${audit.id}">
+        <div class="audit-item ${isSelected ? 'selected' : ''}" data-audit-id="${audit.id}">
+            <div class="checkbox-wrapper">
+                <input type="checkbox" 
+                       class="audit-checkbox" 
+                       id="audit-cb-${audit.id}" 
+                       ${isSelected ? 'checked' : ''}
+                       onchange="toggleAuditSelection('${audit.id}', this)">
+                <label for="audit-cb-${audit.id}">Seleccionar</label>
+            </div>
+            
             <div class="audit-header-info">
                 <div class="audit-date">📅 ${formatDate(audit.callDate)}</div>
                 <div class="audit-badges">

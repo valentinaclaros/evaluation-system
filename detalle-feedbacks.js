@@ -9,6 +9,106 @@ let currentFilters = {
     priority: ''
 };
 
+// Array para guardar los IDs seleccionados
+let selectedFeedbacks = [];
+
+// Actualizar contador de seleccionados
+function updateBulkActionsBar() {
+    const bulkBar = document.getElementById('bulkActionsBar');
+    const countSpan = document.getElementById('selectedCount');
+    
+    if (selectedFeedbacks.length > 0) {
+        bulkBar.classList.add('active');
+        countSpan.textContent = `${selectedFeedbacks.length} seleccionado${selectedFeedbacks.length > 1 ? 's' : ''}`;
+    } else {
+        bulkBar.classList.remove('active');
+    }
+}
+
+// Manejar selección de checkbox
+function toggleFeedbackSelection(feedbackId, checkbox) {
+    const feedbackCard = checkbox.closest('.feedback-item');
+    
+    if (checkbox.checked) {
+        if (!selectedFeedbacks.includes(feedbackId)) {
+            selectedFeedbacks.push(feedbackId);
+            feedbackCard.classList.add('selected');
+        }
+    } else {
+        selectedFeedbacks = selectedFeedbacks.filter(id => id !== feedbackId);
+        feedbackCard.classList.remove('selected');
+    }
+    
+    updateBulkActionsBar();
+}
+
+// Deseleccionar todo
+function deselectAll() {
+    selectedFeedbacks = [];
+    document.querySelectorAll('.feedback-checkbox').forEach(cb => {
+        cb.checked = false;
+    });
+    document.querySelectorAll('.feedback-item').forEach(card => {
+        card.classList.remove('selected');
+    });
+    updateBulkActionsBar();
+}
+
+// Eliminar seleccionados
+async function deleteSelected() {
+    if (selectedFeedbacks.length === 0) {
+        alert('No hay feedbacks seleccionados');
+        return;
+    }
+    
+    const confirmMsg = `¿Estás seguro de que deseas eliminar ${selectedFeedbacks.length} feedback${selectedFeedbacks.length > 1 ? 's' : ''}?\n\nEsta acción no se puede deshacer.`;
+    
+    if (!confirm(confirmMsg)) {
+        return;
+    }
+    
+    try {
+        // Guardar posición del scroll y agentes expandidos
+        const scrollPosition = window.scrollY;
+        const expandedAgents = [];
+        document.querySelectorAll('.agent-feedbacks.expanded').forEach(element => {
+            const agentId = element.id.replace('feedbacks-', '');
+            expandedAgents.push(agentId);
+        });
+        
+        // Eliminar cada feedback
+        for (const feedbackId of selectedFeedbacks) {
+            await deleteFeedback(feedbackId);
+        }
+        
+        const count = selectedFeedbacks.length;
+        
+        // Limpiar selección
+        selectedFeedbacks = [];
+        updateBulkActionsBar();
+        
+        // Recargar lista
+        await loadAgentsWithFeedbacks();
+        
+        // Restaurar estado
+        setTimeout(() => {
+            expandedAgents.forEach(agentId => {
+                const feedbacksContainer = document.getElementById(`feedbacks-${agentId}`);
+                const icon = document.getElementById(`icon-${agentId}`);
+                if (feedbacksContainer && icon) {
+                    feedbacksContainer.classList.add('expanded');
+                    icon.classList.add('expanded');
+                }
+            });
+            window.scrollTo(0, scrollPosition);
+        }, 100);
+        
+        alert(`✅ ${count} feedback${count > 1 ? 's eliminados' : ' eliminado'} correctamente`);
+    } catch (error) {
+        alert('Error al eliminar los feedbacks: ' + error.message);
+    }
+}
+
 // Cargar datos al iniciar
 document.addEventListener('DOMContentLoaded', async function() {
     // Establecer fechas por defecto (últimos 30 días)
@@ -213,8 +313,19 @@ function renderFeedbacks(feedbacks) {
     }
     
     return feedbacks.map(feedback => {
+        const isSelected = selectedFeedbacks.includes(feedback.id);
+        
         return `
-        <div class="feedback-item" data-feedback-id="${feedback.id}">
+        <div class="feedback-item ${isSelected ? 'selected' : ''}" data-feedback-id="${feedback.id}">
+            <div class="checkbox-wrapper">
+                <input type="checkbox" 
+                       class="feedback-checkbox" 
+                       id="feedback-cb-${feedback.id}" 
+                       ${isSelected ? 'checked' : ''}
+                       onchange="toggleFeedbackSelection('${feedback.id}', this)">
+                <label for="feedback-cb-${feedback.id}">Seleccionar</label>
+            </div>
+            
             <div class="feedback-header-info">
                 <div class="feedback-date">📅 ${formatDate(feedback.feedbackDate)}</div>
                 <div class="feedback-badges">
