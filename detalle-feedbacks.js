@@ -111,15 +111,13 @@ async function deleteSelected() {
 
 // Cargar datos al iniciar
 document.addEventListener('DOMContentLoaded', async function() {
-    // Establecer fechas por defecto (últimos 30 días)
+    // Filtro "Desde" SIEMPRE 1 de enero de 2026
     const today = new Date();
-    const thirtyDaysAgo = new Date(today);
-    thirtyDaysAgo.setDate(today.getDate() - 30);
     
-    document.getElementById('filterDateFrom').valueAsDate = thirtyDaysAgo;
-    document.getElementById('filterDateTo').valueAsDate = today;
+    document.getElementById('filterDateFrom').value = '2026-01-01';
+    document.getElementById('filterDateTo').value = today.toISOString().split('T')[0];
     
-    currentFilters.dateFrom = thirtyDaysAgo.toISOString().split('T')[0];
+    currentFilters.dateFrom = '2026-01-01';
     currentFilters.dateTo = today.toISOString().split('T')[0];
     
     await loadAgentsWithFeedbacks();
@@ -428,19 +426,17 @@ async function deleteFeedbackFromDetail(feedbackId) {
     }
 }
 
-// Limpiar filtros
+// Limpiar filtros (Desde sigue siendo 01/01/2026)
 async function clearFilters() {
     const today = new Date();
-    const thirtyDaysAgo = new Date(today);
-    thirtyDaysAgo.setDate(today.getDate() - 30);
     
-    document.getElementById('filterDateFrom').valueAsDate = thirtyDaysAgo;
-    document.getElementById('filterDateTo').valueAsDate = today;
+    document.getElementById('filterDateFrom').value = '2026-01-01';
+    document.getElementById('filterDateTo').value = today.toISOString().split('T')[0];
     document.getElementById('filterType').value = '';
     document.getElementById('filterPriority').value = '';
     
     currentFilters = {
-        dateFrom: thirtyDaysAgo.toISOString().split('T')[0],
+        dateFrom: '2026-01-01',
         dateTo: today.toISOString().split('T')[0],
         type: '',
         priority: ''

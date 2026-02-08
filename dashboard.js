@@ -9,15 +9,13 @@ let currentDateFilter = {
 
 // Cargar dashboard al iniciar
 document.addEventListener('DOMContentLoaded', async function() {
-    // Establecer fechas por defecto (últimos 30 días)
+    // Filtro "Desde" SIEMPRE 1 de enero de 2026
     const today = new Date();
-    const thirtyDaysAgo = new Date(today);
-    thirtyDaysAgo.setDate(today.getDate() - 30);
     
-    document.getElementById('dateFrom').valueAsDate = thirtyDaysAgo;
-    document.getElementById('dateTo').valueAsDate = today;
+    document.getElementById('dateFrom').value = '2026-01-01';
+    document.getElementById('dateTo').value = today.toISOString().split('T')[0];
     
-    currentDateFilter.from = thirtyDaysAgo.toISOString().split('T')[0];
+    currentDateFilter.from = '2026-01-01';
     currentDateFilter.to = today.toISOString().split('T')[0];
     
     await loadDashboard();
