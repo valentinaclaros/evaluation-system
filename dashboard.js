@@ -6,22 +6,34 @@ let currentDateFilter = {
     from: null,
     to: null
 };
+let currentAgentFilter = ''; // '' = Todos
 
 // Cargar dashboard al iniciar
 document.addEventListener('DOMContentLoaded', async function() {
-    // Filtro "Desde" SIEMPRE 1 de enero de 2026
     const today = new Date();
-    
     document.getElementById('dateFrom').value = '2026-01-01';
     document.getElementById('dateTo').value = today.toISOString().split('T')[0];
-    
     currentDateFilter.from = '2026-01-01';
     currentDateFilter.to = today.toISOString().split('T')[0];
-    
+    await loadAgentsFilterDropdown();
     await loadDashboard();
 });
 
-// Filtrar por fecha
+// Llenar dropdown de filtro por agente
+async function loadAgentsFilterDropdown() {
+    const agents = await getAgents();
+    const select = document.getElementById('filterAgent');
+    if (!select) return;
+    select.innerHTML = '<option value="">Todos</option>';
+    (agents || []).forEach(agent => {
+        const opt = document.createElement('option');
+        opt.value = agent.id;
+        opt.textContent = agent.name;
+        select.appendChild(opt);
+    });
+}
+
+// Filtrar por fecha y agente
 async function filterByDate() {
     const dateFrom = document.getElementById('dateFrom').value;
     const dateTo = document.getElementById('dateTo').value;
@@ -38,6 +50,7 @@ async function filterByDate() {
     
     currentDateFilter.from = dateFrom;
     currentDateFilter.to = dateTo;
+    currentAgentFilter = (document.getElementById('filterAgent') || {}).value || '';
     
     await loadDashboard();
 }
@@ -214,27 +227,29 @@ async function loadAgentsRanking() {
     `).join('');
 }
 
-// Cargar llamadas recientes
+// Cargar llamadas recientes (TODOS los registros en el rango, opcionalmente filtrado por agente)
 async function loadRecentCalls() {
     const audits = await getAudits();
-    const agents = await getAgents(); // Pre-cargar agentes
+    const agents = await getAgents();
     const tbody = document.getElementById('recentCallsTableBody');
     
-    const filteredAudits = audits.filter(audit => {
+    let filteredAudits = audits.filter(audit => {
         const callDate = new Date(audit.callDate);
         return callDate >= new Date(currentDateFilter.from) && 
                callDate <= new Date(currentDateFilter.to);
     });
+    if (currentAgentFilter) {
+        filteredAudits = filteredAudits.filter(a => a.agentId === currentAgentFilter);
+    }
     
     if (filteredAudits.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="11" class="no-data">No hay auditorías en este período</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="11" class="no-data">No hay auditorías en este período' + (currentAgentFilter ? ' para el agente seleccionado' : '') + '</td></tr>';
         return;
     }
     
-    // Ordenar por fecha (más recientes primero)
     const sortedAudits = filteredAudits.sort((a, b) => 
         new Date(b.callDate) - new Date(a.callDate)
-    ).slice(0, 10); // Mostrar solo las 10 más recientes
+    );
     
     tbody.innerHTML = sortedAudits.map(audit => {
         const agent = agents.find(a => a.id === audit.agentId);
@@ -316,27 +331,29 @@ function clearAllData() {
     }
 }
 
-// Cargar feedbacks recientes
+// Cargar feedbacks recientes (TODOS los registros en el rango, opcionalmente filtrado por agente)
 async function loadRecentFeedbacks() {
     const feedbacks = await getFeedbacks();
-    const agents = await getAgents(); // Pre-cargar agentes
+    const agents = await getAgents();
     const tbody = document.getElementById('recentFeedbacksTableBody');
     
-    const filteredFeedbacks = feedbacks.filter(feedback => {
+    let filteredFeedbacks = feedbacks.filter(feedback => {
         const feedbackDate = new Date(feedback.feedbackDate);
         return feedbackDate >= new Date(currentDateFilter.from) && 
                feedbackDate <= new Date(currentDateFilter.to);
     });
+    if (currentAgentFilter) {
+        filteredFeedbacks = filteredFeedbacks.filter(f => f.agentId === currentAgentFilter);
+    }
     
     if (filteredFeedbacks.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="9" class="no-data">No hay feedbacks en este período</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="9" class="no-data">No hay feedbacks en este período' + (currentAgentFilter ? ' para el agente seleccionado' : '') + '</td></tr>';
         return;
     }
     
-    // Ordenar por fecha (más recientes primero)
     const sortedFeedbacks = filteredFeedbacks.sort((a, b) => 
         new Date(b.feedbackDate) - new Date(a.feedbackDate)
-    ).slice(0, 10); // Mostrar solo los 10 más recientes
+    );
     
     tbody.innerHTML = sortedFeedbacks.map(feedback => {
         const agent = agents.find(a => a.id === feedback.agentId);
