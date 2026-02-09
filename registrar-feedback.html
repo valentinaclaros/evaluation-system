@@ -46,7 +46,11 @@
 
                         <div class="form-group">
                             <label for="feedbackGivenBy">Feedback Dado Por *</label>
-                            <input type="text" id="feedbackGivenBy" name="feedbackGivenBy" value="Daniel Rodríguez" readonly required>
+                            <select id="feedbackGivenBy" name="feedbackGivenBy" required>
+                                <option value="">Seleccionar...</option>
+                                <option value="Daniel Rodríguez">Daniel Rodríguez</option>
+                                <option value="Valentina Claros">Valentina Claros</option>
+                            </select>
                         </div>
 
                         <div class="form-group">
@@ -62,12 +66,13 @@
                     
                     <div class="form-row">
                         <div class="form-group">
-                            <label for="tipoCancelacion">Tipo de Cancelación *</label>
+                            <label for="tipoCancelacion">Proceso *</label>
                             <select id="tipoCancelacion" name="tipoCancelacion" required>
                                 <option value="">Seleccionar tipo...</option>
-                                <option value="Cuenta de Ahorros">Cancelación Cuenta de Ahorros</option>
-                                <option value="Tarjeta de Crédito">Cancelación Tarjeta de Crédito</option>
-                                <option value="Multiproducto">Cancelación Multiproducto</option>
+                                <option value="Cancelaciones">Cancelaciones</option>
+                                <option value="Certificados">Certificados</option>
+                                <option value="Defunciones">Defunciones</option>
+                                <option value="Nu Plus">Nu Plus</option>
                             </select>
                         </div>
 
