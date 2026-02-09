@@ -470,11 +470,13 @@ async function clearFilters() {
 // Sistema de Strikes por Reincidencias
 // ===================================
 
-// Renderizar sección de strikes para un agente
+// Renderizar sección de strikes para un agente (solo strikes de feedbacks en el rango seleccionado)
 async function renderStrikesSection(agentId, feedbacks) {
     try {
+        const feedbackIdsInRange = new Set((feedbacks || []).map(f => String(f.id)));
+        
         // Obtener strikes del agente desde Supabase
-        const { data: strikes, error } = await supabase
+        const { data: allStrikes, error } = await supabase
             .from('strikes')
             .select('*')
             .eq('agent_id', agentId)
@@ -482,8 +484,11 @@ async function renderStrikesSection(agentId, feedbacks) {
         
         if (error) throw error;
         
-        // Si no hay strikes, mostrar mensaje
-        if (!strikes || strikes.length === 0) {
+        // Solo mostrar strikes cuyos feedbacks están en el rango de fechas
+        const strikes = (allStrikes || []).filter(s => s.feedback_id && feedbackIdsInRange.has(String(s.feedback_id)));
+        
+        // Si no hay strikes en rango, mostrar mensaje
+        if (strikes.length === 0) {
             return {
                 html: `
                 <div class="strikes-section">
