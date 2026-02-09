@@ -3,12 +3,16 @@
 // ===================================
 
 let currentIncidenciaLevel = 0;
+let editingFeedbackId = null;
 
 document.addEventListener('DOMContentLoaded', async function() {
+    const urlParams = new URLSearchParams(window.location.search);
+    if (!urlParams.has('edit')) localStorage.removeItem('editingFeedbackId');
     await loadAgentsDropdown();
     setupForm();
     setDefaultDate();
     setupEventListeners();
+    await checkEditModeFeedback();
 });
 
 // Cargar agentes en los dropdowns
@@ -32,8 +36,60 @@ async function loadAgentsDropdown() {
 
 // Establecer fecha por defecto
 function setDefaultDate() {
+    if (editingFeedbackId) return;
     const today = new Date().toISOString().split('T')[0];
     document.getElementById('feedbackDate').value = today;
+}
+
+// Formatear fecha para input type="date"
+function formatDateForInput(dateVal) {
+    if (!dateVal) return '';
+    const d = new Date(dateVal);
+    if (isNaN(d.getTime())) return '';
+    return d.toISOString().split('T')[0];
+}
+
+// Modo edición: cargar feedback y rellenar formulario
+async function checkEditModeFeedback() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const editParam = urlParams.get('edit');
+    const storedId = localStorage.getItem('editingFeedbackId');
+    const feedbackId = (editParam || storedId || '').trim();
+    if (!feedbackId) return;
+    editingFeedbackId = feedbackId;
+    const feedbacks = await getFeedbacks();
+    const feedback = feedbacks.find(f => String(f.id).trim() === feedbackId);
+    if (!feedback) {
+        editingFeedbackId = null;
+        return;
+    }
+    const headerTitle = document.querySelector('.page-header h2');
+    if (headerTitle) headerTitle.textContent = 'Editar Feedback';
+    const submitBtn = document.querySelector('button[type="submit"]');
+    if (submitBtn) submitBtn.textContent = 'Guardar Cambios';
+    document.getElementById('feedbackAgentId').value = feedback.agentId || '';
+    document.getElementById('feedbackGivenBy').value = feedback.feedbackGivenBy || '';
+    document.getElementById('feedbackDate').value = formatDateForInput(feedback.feedbackDate);
+    document.getElementById('tipoCancelacion').value = feedback.feedbackProcess || '';
+    document.getElementById('feedbackType').value = feedback.feedbackType || '';
+    if (feedback.channel) document.getElementById('channel').value = feedback.channel;
+    if (feedback.owner) document.getElementById('owner').value = feedback.owner;
+    document.getElementById('planAccion').value = feedback.feedbackMessage || '';
+    if (feedback.priority && ['Baja', 'Media', 'Alta'].includes(feedback.priority)) {
+        document.getElementById('gravedad').value = feedback.priority;
+    }
+    if (feedback.additionalSteps === 'matriz_disciplinaria') {
+        document.getElementById('matrizDisciplinaria').value = 'Si';
+        document.getElementById('matrizDetallesSection').style.display = 'block';
+    }
+    await loadRelatedAudits(feedback.agentId);
+    setTimeout(() => {
+        (feedback.relatedCalls || []).forEach(auditId => {
+            const id = String(auditId).trim();
+            const cb = document.querySelector(`input[name="relatedAudits"][value="${id}"]`);
+            if (cb) cb.checked = true;
+        });
+    }, 300);
 }
 
 // Configurar event listeners
@@ -273,7 +329,8 @@ async function handleSubmit(e) {
     
     try {
         await saveFeedback(formData);
-        showSuccess('Feedback guardado exitosamente');
+        showSuccess(editingFeedbackId ? 'Feedback actualizado correctamente' : 'Feedback guardado exitosamente');
+        if (editingFeedbackId) localStorage.removeItem('editingFeedbackId');
         setTimeout(() => {
             window.location.href = 'detalle-feedbacks.html';
         }, 1500);
@@ -282,41 +339,43 @@ async function handleSubmit(e) {
     }
 }
 
-// Guardar feedback y generar strike si aplica
+// Guardar feedback y generar strike si aplica (o actualizar si es edición)
 async function saveFeedback(formData) {
-    // Preparar datos del feedback para Supabase (sin ID, Supabase lo genera automáticamente)
+    if (editingFeedbackId) {
+        const feedbackUpdate = {
+            agentId: formData.agentId,
+            feedbackDate: formData.feedbackDate,
+            feedbackGivenBy: formData.givenBy,
+            feedbackMessage: formData.message,
+            feedbackType: formData.feedbackType,
+            feedbackProcess: formData.tipoCancelacion || null,
+            priority: formData.priority || 'media',
+            additionalSteps: formData.additionalSteps || null,
+            actionPlan: formData.message || '',
+            followUpDate: null,
+            relatedCalls: (formData.relatedCallIds || []).map(id => String(id))
+        };
+        const data = await updateFeedback(editingFeedbackId, feedbackUpdate);
+        return data;
+    }
     const feedbackData = {
         agent_id: formData.agentId,
         feedback_date: formData.feedbackDate,
         feedback_given_by: formData.givenBy,
         feedback_message: formData.message,
         feedback_type: formData.feedbackType,
+        feedback_process: formData.tipoCancelacion || null,
         priority: formData.priority || 'media',
         additional_steps: formData.matrizDisciplinaria ? 'matriz_disciplinaria' : 'na',
         related_calls: (formData.relatedCallIds || []).map(id => String(id))
     };
-    
-    console.log('Guardando feedback:', feedbackData);
-    
-    // Insertar feedback en Supabase
     const { data: feedback, error: feedbackError } = await supabase
         .from('feedbacks')
         .insert([feedbackData])
         .select()
         .single();
-    
-    if (feedbackError) {
-        console.error('Error al guardar feedback:', feedbackError);
-        throw feedbackError;
-    }
-    
-    console.log('Feedback guardado exitosamente:', feedback);
-    
-    // Si hay strike seleccionado, generar strike (independiente de matriz)
-    if (formData.strikeLevel) {
-        await generateStrike(formData, feedback.id);
-    }
-    
+    if (feedbackError) throw feedbackError;
+    if (formData.strikeLevel) await generateStrike(formData, feedback.id);
     return feedback;
 }
 

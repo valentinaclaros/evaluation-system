@@ -296,6 +296,36 @@ async function addFeedback(feedback) {
     }
 }
 
+// Actualizar un feedback
+async function updateFeedback(feedbackId, feedback) {
+    try {
+        const feedbackData = {
+            agent_id: feedback.agentId,
+            feedback_date: feedback.feedbackDate,
+            feedback_given_by: feedback.feedbackGivenBy,
+            feedback_message: feedback.feedbackMessage,
+            feedback_type: feedback.feedbackType,
+            feedback_process: feedback.feedbackProcess || null,
+            priority: feedback.priority || 'media',
+            additional_steps: feedback.additionalSteps || null,
+            action_plan: feedback.actionPlan || '',
+            follow_up_date: feedback.followUpDate || null,
+            related_calls: feedback.relatedCalls || []
+        };
+        const { data, error } = await supabase
+            .from('feedbacks')
+            .update(feedbackData)
+            .eq('id', feedbackId)
+            .select()
+            .single();
+        if (error) throw error;
+        return data;
+    } catch (error) {
+        console.error('Error al actualizar feedback:', error);
+        throw error;
+    }
+}
+
 // Eliminar un feedback (y los strikes asociados a ese feedback)
 async function deleteFeedback(feedbackId) {
     try {

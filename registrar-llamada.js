@@ -286,6 +286,14 @@ function setupForm() {
     });
 }
 
+// Formatear fecha para input type="date" (YYYY-MM-DD)
+function formatDateForInput(dateVal) {
+    if (!dateVal) return '';
+    const d = new Date(dateVal);
+    if (isNaN(d.getTime())) return '';
+    return d.toISOString().split('T')[0];
+}
+
 // Verificar si estamos en modo edición
 async function checkEditMode() {
     const urlParams = new URLSearchParams(window.location.search);
@@ -293,23 +301,25 @@ async function checkEditMode() {
     const editingAuditId = localStorage.getItem('editingAuditId');
     
     if (editingAuditId || editParam) {
-        const auditId = editingAuditId || editParam;
+        const auditId = String(editingAuditId || editParam).trim();
         const audits = await getAudits();
-        const audit = audits.find(a => a.id === auditId);
+        const audit = audits.find(a => String(a.id).trim() === auditId);
         
         if (audit) {
             // Cambiar título de la página
-            document.querySelector('.page-header h2').textContent = 'Editar Auditoría';
-            document.querySelector('.page-header .subtitle').textContent = 'Modifica la información de la auditoría';
+            const headerTitle = document.querySelector('.page-header h2');
+            const headerSubtitle = document.querySelector('.page-header .subtitle');
+            if (headerTitle) headerTitle.textContent = 'Editar Auditoría';
+            if (headerSubtitle) headerSubtitle.textContent = 'Modifica la información de la auditoría';
             
-            // Cambiar texto del botón
-            document.querySelector('button[type="submit"]').textContent = 'Guardar Cambios';
+            const submitBtn = document.querySelector('button[type="submit"]');
+            if (submitBtn) submitBtn.textContent = 'Guardar Cambios';
             
-            // Cargar datos en el formulario
-            document.getElementById('callDate').value = audit.callDate;
-            document.getElementById('customerId').value = audit.customerId;
-            document.getElementById('callType').value = audit.callType;
-            document.getElementById('auditDate').value = audit.auditDate || audit.callDate;
+            // Cargar datos en el formulario (fechas en YYYY-MM-DD)
+            document.getElementById('callDate').value = formatDateForInput(audit.callDate);
+            document.getElementById('customerId').value = audit.customerId || '';
+            document.getElementById('callType').value = audit.callType || '';
+            document.getElementById('auditDate').value = formatDateForInput(audit.auditDate || audit.callDate);
             document.getElementById('enlacePv').value = audit.enlacePv || '';
             document.getElementById('bpo').value = audit.bpo || '';
             document.getElementById('agentId').value = audit.agentId;
@@ -347,20 +357,19 @@ async function checkEditMode() {
                 toggleHoldTimeInput();
             }
             
-            // Activar la sección de errores correspondiente
-            updateErrorsSection(audit.callType);
+            // Activar la sección de errores correspondiente (mostrar la correcta)
+            updateErrorsSection(audit.callType, audit.criticality);
             
-            // Esperar un momento y luego marcar los errores
+            // Esperar a que se rendericen los checkboxes y marcar los errores
             setTimeout(() => {
                 if (audit.errors && Array.isArray(audit.errors)) {
                     audit.errors.forEach(error => {
-                        const checkbox = document.querySelector(`input[name="error"][value="${error}"]`);
-                        if (checkbox) {
-                            checkbox.checked = true;
-                        }
+                        const escaped = String(error).replace(/"/g, '\\"');
+                        const checkbox = document.querySelector(`input[name="error"][value="${escaped}"]`);
+                        if (checkbox) checkbox.checked = true;
                     });
                 }
-            }, 100);
+            }, 200);
             
             // Guardar el ID en localStorage por si no estaba
             localStorage.setItem('editingAuditId', auditId);
