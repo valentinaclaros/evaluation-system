@@ -40,7 +40,7 @@ function handleFileSelect(e) {
     const isExcel = ext.endsWith('.xlsx') || ext.endsWith('.xls') || mime.includes('spreadsheet') || mime.includes('excel');
     const isPdf = ext.endsWith('.pdf') || mime === 'application/pdf';
     if (!isCsv && !isExcel && !isPdf) {
-        showError('Formato no soportado. Usa .csv, .xlsx, .xls o .pdf');
+        showError('Formato no soportado. Aceptamos: CSV, Excel (.xlsx, .xls) y PDF (.pdf)');
         return;
     }
     const reader = new FileReader();
