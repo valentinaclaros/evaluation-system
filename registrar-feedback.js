@@ -291,7 +291,8 @@ async function saveFeedback(formData) {
         feedback_message: formData.message,
         feedback_type: formData.feedbackType,
         priority: 'media',
-        additional_steps: formData.matrizDisciplinaria ? 'matriz_disciplinaria' : 'na'
+        additional_steps: formData.matrizDisciplinaria ? 'matriz_disciplinaria' : 'na',
+        related_calls: (formData.relatedCallIds || []).map(id => String(id))
     };
     
     console.log('Guardando feedback:', feedbackData);

@@ -171,10 +171,39 @@ async function applyFilters() {
     await loadAgentsWithFeedbacks();
 }
 
+// Calcular reincidencias: errores de las auditorías vinculadas al feedback que se repiten en auditorías posteriores
+function calcularReincidencias(agentId, feedbacks, audits) {
+    const agentAudits = audits.filter(a => a.agentId === agentId);
+    let totalReincidencias = 0;
+    feedbacks.forEach(feedback => {
+        const relatedIds = feedback.relatedCalls || [];
+        if (relatedIds.length === 0) return;
+        const relatedAudits = agentAudits.filter(a => relatedIds.includes(a.id));
+        const erroresRelacionados = new Set();
+        relatedAudits.forEach(a => {
+            if (a.errorDescription) erroresRelacionados.add(String(a.errorDescription).trim());
+            if (a.errors && Array.isArray(a.errors)) a.errors.forEach(e => erroresRelacionados.add(String(e).trim()));
+        });
+        if (erroresRelacionados.size === 0) return;
+        const fechaFeedback = new Date(feedback.feedbackDate);
+        const auditoriasPosteriores = agentAudits.filter(a => new Date(a.callDate) > fechaFeedback);
+        auditoriasPosteriores.forEach(audit => {
+            const tieneErrorRepetido = (a) => {
+                if (a.errorDescription && erroresRelacionados.has(String(a.errorDescription).trim())) return true;
+                if (a.errors && Array.isArray(a.errors)) return a.errors.some(e => erroresRelacionados.has(String(e).trim()));
+                return false;
+            };
+            if (tieneErrorRepetido(audit)) totalReincidencias++;
+        });
+    });
+    return totalReincidencias;
+}
+
 // Cargar agentes con sus feedbacks
 async function loadAgentsWithFeedbacks() {
     const agents = await getAgents();
     const feedbacks = await getFeedbacks();
+    const audits = await getAudits();
     const container = document.getElementById('agentsContainer');
     
     if (agents.length === 0) {
@@ -219,11 +248,13 @@ async function loadAgentsWithFeedbacks() {
         
         // Calcular estadísticas del agente
         const totalFeedbacks = agentFeedbacks.length;
+        const reincidencias = calcularReincidencias(agent.id, agentFeedbacks, audits);
         
         return {
             agent,
             feedbacks: agentFeedbacks,
-            totalFeedbacks
+            totalFeedbacks,
+            reincidencias
         };
     });
     
@@ -246,7 +277,7 @@ async function loadAgentsWithFeedbacks() {
     
     // Generar HTML
     const htmlPromises = agentsWithData.map(async agentData => {
-        const { html: strikesSection, totalStrikes, maxStrikeLevel } = await renderStrikesSection(agentData.agent.id, agentData.feedbacks);
+        const { html: strikesSection, totalStrikes } = await renderStrikesSection(agentData.agent.id, agentData.feedbacks);
         return `
         <div class="agent-card">
             <div class="agent-header" onclick="toggleAgentFeedbacks('${agentData.agent.id}')">
@@ -262,8 +293,8 @@ async function loadAgentsWithFeedbacks() {
                             <span class="agent-stat-value">${totalStrikes}</span>
                         </div>
                         <div class="agent-stat">
-                            <span class="agent-stat-label">Reincidencias (nivel máx.)</span>
-                            <span class="agent-stat-value">${maxStrikeLevel > 0 ? `Strike ${maxStrikeLevel}` : 'Ninguno'}</span>
+                            <span class="agent-stat-label">Reincidencias</span>
+                            <span class="agent-stat-value">${agentData.reincidencias}</span>
                         </div>
                     </div>
                 </div>

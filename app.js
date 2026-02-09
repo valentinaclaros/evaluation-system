@@ -296,9 +296,18 @@ async function addFeedback(feedback) {
     }
 }
 
-// Eliminar un feedback
+// Eliminar un feedback (y los strikes asociados a ese feedback)
 async function deleteFeedback(feedbackId) {
     try {
+        // Primero eliminar los strikes que referencian este feedback
+        const { error: strikeError } = await supabase
+            .from('strikes')
+            .delete()
+            .eq('feedback_id', feedbackId);
+        
+        if (strikeError) console.warn('Al eliminar strikes del feedback:', strikeError);
+        
+        // Luego eliminar el feedback
         const { error } = await supabase
             .from('feedbacks')
             .delete()
