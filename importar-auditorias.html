@@ -46,8 +46,12 @@
                     </select>
                 </div>
                 <div class="form-group">
-                    <label for="fileInput">Archivo Excel, CSV o PDF *</label>
-                    <input type="file" id="fileInput" accept=".csv,.xlsx,.xls,.pdf">
+                    <label>Archivo a importar *</label>
+                    <div style="display: flex; flex-wrap: wrap; gap: 0.75rem; align-items: center;">
+                        <input type="file" id="fileInput" accept=".csv,.xlsx,.xls,.pdf,application/pdf,text/csv,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" style="max-width: 100%;">
+                        <span style="color: var(--text-muted); font-size: 0.9rem;">CSV, Excel (.xlsx, .xls) o <strong>PDF (.pdf)</strong></span>
+                    </div>
+                    <small class="form-hint">Si no ves PDF en el selector, elige "Todos los archivos" y selecciona tu .pdf</small>
                 </div>
             </div>
             <div id="previewSection" style="display: none;">
@@ -70,7 +74,7 @@
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.0/dist/umd/supabase.min.js"></script>
     <script src="https://cdn.sheetjs.com/xlsx-0.20.0/package/dist/xlsx.full.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@4.0.379/legacy/build/pdf.min.js"></script>
     <script src="supabase-config.js"></script>
     <script src="app.js"></script>
     <script src="importar-auditorias.js"></script>

@@ -4,11 +4,14 @@
 
 let parsedRows = []; // { raw: {...}, mapped: {...} }[]
 
-if (typeof pdfjsLib !== 'undefined') {
-    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+function initPdfWorker() {
+    if (typeof pdfjsLib !== 'undefined' && !pdfjsLib.GlobalWorkerOptions.workerSrc) {
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@4.0.379/legacy/build/pdf.worker.min.js';
+    }
 }
 
 document.addEventListener('DOMContentLoaded', async function() {
+    initPdfWorker();
     await loadAgentsDropdown();
     document.getElementById('fileInput').addEventListener('change', handleFileSelect);
     document.getElementById('btnImport').addEventListener('click', doImport);
@@ -64,10 +67,11 @@ function handleFileSelect(e) {
 }
 
 async function parsePDF(arrayBuffer) {
+    initPdfWorker();
     if (typeof pdfjsLib === 'undefined') {
         throw new Error('Librería PDF no cargada. Recarga la página.');
     }
-    pdfjsLib.GlobalWorkerOptions.workerSrc = pdfjsLib.GlobalWorkerOptions.workerSrc || 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+    pdfjsLib.GlobalWorkerOptions.workerSrc = pdfjsLib.GlobalWorkerOptions.workerSrc || 'https://cdn.jsdelivr.net/npm/pdfjs-dist@4.0.379/legacy/build/pdf.worker.min.js';
     const doc = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
     const numPages = doc.numPages;
     const allLines = [];
