@@ -35,9 +35,10 @@ function handleFileSelect(e) {
     parsedRows = [];
     hideMessages();
     const ext = (file.name || '').toLowerCase();
-    const isCsv = ext.endsWith('.csv');
-    const isExcel = ext.endsWith('.xlsx') || ext.endsWith('.xls');
-    const isPdf = ext.endsWith('.pdf');
+    const mime = (file.type || '').toLowerCase();
+    const isCsv = ext.endsWith('.csv') || mime === 'text/csv';
+    const isExcel = ext.endsWith('.xlsx') || ext.endsWith('.xls') || mime.includes('spreadsheet') || mime.includes('excel');
+    const isPdf = ext.endsWith('.pdf') || mime === 'application/pdf';
     if (!isCsv && !isExcel && !isPdf) {
         showError('Formato no soportado. Usa .csv, .xlsx, .xls o .pdf');
         return;
