@@ -1,8 +1,12 @@
 // ===================================
-// Importar Auditorías - Excel/CSV
+// Importar Auditorías - Excel/CSV/PDF
 // ===================================
 
 let parsedRows = []; // { raw: {...}, mapped: {...} }[]
+
+if (typeof pdfjsLib !== 'undefined') {
+    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+}
 
 document.addEventListener('DOMContentLoaded', async function() {
     await loadAgentsDropdown();
@@ -30,17 +34,20 @@ function handleFileSelect(e) {
     const ext = (file.name || '').toLowerCase();
     const isCsv = ext.endsWith('.csv');
     const isExcel = ext.endsWith('.xlsx') || ext.endsWith('.xls');
-    if (!isCsv && !isExcel) {
-        showError('Formato no soportado. Usa .csv, .xlsx o .xls');
+    const isPdf = ext.endsWith('.pdf');
+    if (!isCsv && !isExcel && !isPdf) {
+        showError('Formato no soportado. Usa .csv, .xlsx, .xls o .pdf');
         return;
     }
     const reader = new FileReader();
-    reader.onload = function(ev) {
+    reader.onload = async function(ev) {
         try {
             if (isCsv) {
                 parseCSV(ev.target.result);
-            } else {
+            } else if (isExcel) {
                 parseExcel(ev.target.result);
+            } else if (isPdf) {
+                await parsePDF(ev.target.result);
             }
             if (parsedRows.length > 0) {
                 renderPreview();
@@ -52,8 +59,47 @@ function handleFileSelect(e) {
             showError('Error al leer el archivo: ' + err.message);
         }
     };
-    if (isExcel) reader.readAsArrayBuffer(file);
+    if (isExcel || isPdf) reader.readAsArrayBuffer(file);
     else reader.readAsText(file, 'UTF-8');
+}
+
+async function parsePDF(arrayBuffer) {
+    if (typeof pdfjsLib === 'undefined') {
+        throw new Error('Librería PDF no cargada. Recarga la página.');
+    }
+    pdfjsLib.GlobalWorkerOptions.workerSrc = pdfjsLib.GlobalWorkerOptions.workerSrc || 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+    const doc = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+    const numPages = doc.numPages;
+    const allLines = [];
+    for (let p = 1; p <= numPages; p++) {
+        const page = await doc.getPage(p);
+        const content = await page.getTextContent();
+        const byY = {};
+        content.items.forEach(item => {
+            const y = Math.round((item.transform[5] || 0) * 10) / 10;
+            if (!byY[y]) byY[y] = [];
+            byY[y].push({ str: item.str || '', x: item.transform[4] || 0 });
+        });
+        const sortedY = Object.keys(byY).map(Number).sort((a, b) => b - a);
+        sortedY.forEach(y => {
+            byY[y].sort((a, b) => a.x - b.x);
+            const line = byY[y].map(i => i.str).join('\t');
+            if (line.trim()) allLines.push(line);
+        });
+    }
+    if (allLines.length < 2) return;
+    let headers = allLines[0].split(/\t+/).map(h => h.trim()).filter(Boolean);
+    if (headers.length < 2) headers = allLines[0].split(/\s{2,}/).map(h => h.trim()).filter(Boolean);
+    if (headers.length < 2) return;
+    for (let i = 1; i < allLines.length; i++) {
+        let values = allLines[i].split(/\t+/).map(v => v.trim());
+        if (values.length < 2) values = allLines[i].split(/\s{2,}/).map(v => v.trim());
+        if (values.every(v => !v)) continue;
+        const raw = {};
+        headers.forEach((h, j) => { raw[h] = values[j] != null ? String(values[j]).trim() : ''; });
+        const mapped = mapRowToAudit(raw);
+        if (mapped) parsedRows.push({ raw, mapped });
+    }
 }
 
 function parseCSV(text) {
