@@ -37,34 +37,34 @@ function handleFileSelect(e) {
     const ext = (file.name || '').toLowerCase();
     const mime = (file.type || '').toLowerCase();
     const isCsv = ext.endsWith('.csv') || mime === 'text/csv';
-    const isExcel = ext.endsWith('.xlsx') || ext.endsWith('.xls') || mime.includes('spreadsheet') || mime.includes('excel');
-    const isPdf = ext.endsWith('.pdf') || mime === 'application/pdf';
-    if (!isCsv && !isExcel && !isPdf) {
-        showError('Formato no soportado. Aceptamos: CSV, Excel (.xlsx, .xls) y PDF (.pdf)');
-        return;
-    }
     const reader = new FileReader();
     reader.onload = async function(ev) {
         try {
-            if (isCsv) {
-                parseCSV(ev.target.result);
-            } else if (isExcel) {
-                parseExcel(ev.target.result);
-            } else if (isPdf) {
-                await parsePDF(ev.target.result);
+            const result = ev.target.result;
+            if (isCsv && typeof result === 'string') {
+                parseCSV(result);
+            } else if (result instanceof ArrayBuffer) {
+                const header = String.fromCharCode.apply(null, new Uint8Array(result.slice(0, 5)));
+                if (header.startsWith('%PDF')) {
+                    await parsePDF(result);
+                } else {
+                    parseExcel(result);
+                }
+            } else {
+                parseCSV(result);
             }
             if (parsedRows.length > 0) {
                 renderPreview();
                 document.getElementById('previewSection').style.display = 'block';
             } else {
-                showError('No se encontraron filas con datos en el archivo.');
+                showError('No se encontraron filas con datos. Usa CSV, Excel (.xlsx, .xls) o PDF (.pdf) con la estructura indicada.');
             }
         } catch (err) {
             showError('Error al leer el archivo: ' + err.message);
         }
     };
-    if (isExcel || isPdf) reader.readAsArrayBuffer(file);
-    else reader.readAsText(file, 'UTF-8');
+    if (isCsv) reader.readAsText(file, 'UTF-8');
+    else reader.readAsArrayBuffer(file);
 }
 
 async function parsePDF(arrayBuffer) {
