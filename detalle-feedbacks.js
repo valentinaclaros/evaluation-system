@@ -219,17 +219,11 @@ async function loadAgentsWithFeedbacks() {
         
         // Calcular estadísticas del agente
         const totalFeedbacks = agentFeedbacks.length;
-        const correctivos = agentFeedbacks.filter(f => f.feedbackType === 'correctivo').length;
-        const positivos = agentFeedbacks.filter(f => f.feedbackType === 'positivo').length;
-        const constructivos = agentFeedbacks.filter(f => f.feedbackType === 'constructivo').length;
         
         return {
             agent,
             feedbacks: agentFeedbacks,
-            totalFeedbacks,
-            correctivos,
-            positivos,
-            constructivos
+            totalFeedbacks
         };
     });
     
@@ -252,7 +246,7 @@ async function loadAgentsWithFeedbacks() {
     
     // Generar HTML
     const htmlPromises = agentsWithData.map(async agentData => {
-        const strikesSection = await renderStrikesSection(agentData.agent.id, agentData.feedbacks);
+        const { html: strikesSection, totalStrikes, maxStrikeLevel } = await renderStrikesSection(agentData.agent.id, agentData.feedbacks);
         return `
         <div class="agent-card">
             <div class="agent-header" onclick="toggleAgentFeedbacks('${agentData.agent.id}')">
@@ -260,20 +254,16 @@ async function loadAgentsWithFeedbacks() {
                     <div class="agent-name">${agentData.agent.name}</div>
                     <div class="agent-stats">
                         <div class="agent-stat">
-                            <span class="agent-stat-label">Total Feedbacks</span>
+                            <span class="agent-stat-label">Total Feedbacks (en rango)</span>
                             <span class="agent-stat-value">${agentData.totalFeedbacks}</span>
                         </div>
                         <div class="agent-stat">
-                            <span class="agent-stat-label">🔴 Correctivos</span>
-                            <span class="agent-stat-value">${agentData.correctivos}</span>
+                            <span class="agent-stat-label">Total Strikes</span>
+                            <span class="agent-stat-value">${totalStrikes}</span>
                         </div>
                         <div class="agent-stat">
-                            <span class="agent-stat-label">🟡 Constructivos</span>
-                            <span class="agent-stat-value">${agentData.constructivos}</span>
-                        </div>
-                        <div class="agent-stat">
-                            <span class="agent-stat-label">🟢 Positivos</span>
-                            <span class="agent-stat-value">${agentData.positivos}</span>
+                            <span class="agent-stat-label">Reincidencias (nivel máx.)</span>
+                            <span class="agent-stat-value">${maxStrikeLevel > 0 ? `Strike ${maxStrikeLevel}` : 'Ninguno'}</span>
                         </div>
                     </div>
                 </div>
@@ -463,7 +453,8 @@ async function renderStrikesSection(agentId, feedbacks) {
         
         // Si no hay strikes, mostrar mensaje
         if (!strikes || strikes.length === 0) {
-            return `
+            return {
+                html: `
                 <div class="strikes-section">
                     <div class="strikes-title">
                         ⚠️ Sistema de Strikes por Reincidencias
@@ -472,7 +463,10 @@ async function renderStrikesSection(agentId, feedbacks) {
                         Este agente no tiene strikes registrados.
                     </div>
                 </div>
-            `;
+            `,
+                totalStrikes: 0,
+                maxStrikeLevel: 0
+            };
         }
         
         // Agrupar strikes por nivel
@@ -532,7 +526,9 @@ async function renderStrikesSection(agentId, feedbacks) {
             `;
         }).join('');
         
-        return `
+        const maxStrikeLevel = Math.max(...strikes.map(s => s.strike_level));
+        return {
+            html: `
             <div class="strikes-section">
                 <div class="strikes-title">
                     ⚠️ Sistema de Strikes por Reincidencias
@@ -541,11 +537,15 @@ async function renderStrikesSection(agentId, feedbacks) {
                     ${strikesHTML}
                 </div>
             </div>
-        `;
+        `,
+            totalStrikes: strikes.length,
+            maxStrikeLevel
+        };
         
     } catch (error) {
         console.error('Error al cargar strikes:', error);
-        return `
+        return {
+            html: `
             <div class="strikes-section">
                 <div class="strikes-title">
                     ⚠️ Sistema de Strikes por Reincidencias
@@ -554,7 +554,10 @@ async function renderStrikesSection(agentId, feedbacks) {
                     Error al cargar los strikes del agente.
                 </div>
             </div>
-        `;
+        `,
+            totalStrikes: 0,
+            maxStrikeLevel: 0
+        };
     }
 }
 
