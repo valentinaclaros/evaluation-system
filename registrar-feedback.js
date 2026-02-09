@@ -174,10 +174,9 @@ async function loadRelatedAudits(agentId) {
     const audits = await getAudits();
     const container = document.getElementById('relatedCallsCheckboxes');
     
-    // Filtrar auditorías del agente seleccionado
+    // Filtrar auditorías del agente: todas, desde la primera hasta la más reciente
     const agentAudits = audits.filter(a => a.agentId === agentId)
-        .sort((a, b) => new Date(b.callDate) - new Date(a.callDate))
-        .slice(0, 20); // Últimas 20 auditorías
+        .sort((a, b) => new Date(b.callDate) - new Date(a.callDate));
     
     if (agentAudits.length === 0) {
         container.innerHTML = '<p class="info-text">Este agente no tiene auditorías registradas</p>';
