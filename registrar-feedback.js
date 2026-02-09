@@ -228,7 +228,7 @@ async function handleSubmit(e) {
         owner: document.getElementById('owner').value,
         message: document.getElementById('planAccion').value,
         additionalSteps: document.getElementById('matrizDisciplinaria').value === 'Si' ? 'matriz_disciplinaria' : 'na',
-        priority: 'media'
+        priority: document.getElementById('gravedad')?.value || 'media'
     };
     
     // Recopilar auditorías seleccionadas
@@ -236,8 +236,9 @@ async function handleSubmit(e) {
         .map(cb => cb.value);
     formData.relatedCallIds = selectedAudits;
     
-    // Si aplica matriz disciplinaria, agregar datos adicionales
+    // Si aplica matriz disciplinaria, usar gravedad para priority
     if (document.getElementById('matrizDisciplinaria').value === 'Si') {
+        formData.priority = document.getElementById('gravedad').value || 'media';
         formData.matrizDisciplinaria = {
             tipoFalta: document.getElementById('tipoFalta').value,
             gravedad: document.getElementById('gravedad').value,
@@ -290,7 +291,7 @@ async function saveFeedback(formData) {
         feedback_given_by: formData.givenBy,
         feedback_message: formData.message,
         feedback_type: formData.feedbackType,
-        priority: 'media',
+        priority: formData.priority || 'media',
         additional_steps: formData.matrizDisciplinaria ? 'matriz_disciplinaria' : 'na',
         related_calls: (formData.relatedCallIds || []).map(id => String(id))
     };
