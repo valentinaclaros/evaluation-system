@@ -354,10 +354,11 @@ function mapExcelErrorsToChecklist(restText, callType) {
         }
         if (!matched && line.length > 0) notesParts.push(line);
     }
-    // Si había texto en Xtronaut pero ningún error coincidió con la checklist, marcar "Otro" para no dejar el campo vacío
+    // Si había texto pero ningún error coincidió: "Otro" para todos los motivos (ahorros, TC, multiproducto)
     if (errors.length === 0 && cleaned.length > 0) {
         if (isTarjeta) errors.push('TC: Otro');
-        else if (isAhorros || isMulti) errors.push('Otro');
+        else if (isAhorros) errors.push('Otro');
+        else if (isMulti) { errors.push('Otro'); errors.push('TC: Otro'); }
     }
     return { errors: errors, callNotes: notesParts.join(' ').trim() };
 }
@@ -442,6 +443,13 @@ function mapRowToAudit(raw) {
         var mapped = mapExcelErrorsToChecklist(parsed.restText || '', callType);
         errors = mapped.errors;
         callNotes = mapped.callNotes || '';
+        // Si hubo texto en Xtronaut pero ningún error de la checklist: marcar "Otro" (aplica a todos los motivos)
+        if (errors.length === 0) {
+            if (callType === 'cancelacion_tarjeta_credito') errors = ['TC: Otro'];
+            else if (callType === 'cancelacion_cuenta_ahorros') errors = ['Otro'];
+            else if (callType === 'cancelacion_multiproducto') errors = ['Otro', 'TC: Otro'];
+            else errors = ['Otro'];
+        }
         errorDescription = errors.length > 0 ? errors.join('; ') : (parsed.restText || '');
     }
 
