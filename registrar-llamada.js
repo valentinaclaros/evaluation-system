@@ -328,24 +328,39 @@ async function checkEditMode() {
             document.getElementById('tnps').value = audit.tnps;
             document.getElementById('callNotes').value = audit.callNotes || '';
             
-            // Cargar motivo de cancelación si existe
+            // Cargar motivo de cancelación: primero actualizar opciones según razón de contacto, luego establecer valor
+            updateCancellationReasons();
             if (audit.cancellationReason) {
-                // Primero actualizar la razón de contacto para cargar las opciones
-                updateCancellationReasons();
-                
-                // Luego establecer el valor
-                setTimeout(() => {
+                const applyMotivo = () => {
                     if (audit.callType === 'cancelacion_multiproducto' && audit.cancellationReason.includes('|')) {
-                        // Parsear motivos de multiproducto
                         const parts = audit.cancellationReason.split('|');
-                        const ahorrosMotivo = parts[0].replace('Ahorros: ', '').trim();
-                        const creditoMotivo = parts[1].replace('Crédito: ', '').trim();
-                        document.getElementById('multiproductoAhorrosReason').value = ahorrosMotivo;
-                        document.getElementById('multiproductoCreditoReason').value = creditoMotivo;
+                        const ahorrosMotivo = (parts[0] || '').replace(/Ahorros:\s*/i, '').trim();
+                        const creditoMotivo = (parts[1] || '').replace(/Crédito:\s*/i, '').trim();
+                        const multiAhorros = document.getElementById('multiproductoAhorrosReason');
+                        const multiCredito = document.getElementById('multiproductoCreditoReason');
+                        if (multiAhorros) multiAhorros.value = ahorrosMotivo;
+                        if (multiCredito) multiCredito.value = creditoMotivo;
+                        if (multiAhorros && !multiAhorros.value && ahorrosMotivo) {
+                            multiAhorros.appendChild(new Option(ahorrosMotivo, ahorrosMotivo));
+                            multiAhorros.value = ahorrosMotivo;
+                        }
+                        if (multiCredito && !multiCredito.value && creditoMotivo) {
+                            multiCredito.appendChild(new Option(creditoMotivo, creditoMotivo));
+                            multiCredito.value = creditoMotivo;
+                        }
                     } else {
-                        document.getElementById('cancellationReason').value = audit.cancellationReason;
+                        const reasonSelect = document.getElementById('cancellationReason');
+                        if (reasonSelect) {
+                            reasonSelect.value = audit.cancellationReason;
+                            if (!reasonSelect.value && audit.cancellationReason) {
+                                reasonSelect.appendChild(new Option(audit.cancellationReason, audit.cancellationReason));
+                                reasonSelect.value = audit.cancellationReason;
+                            }
+                        }
                     }
-                }, 100);
+                };
+                setTimeout(applyMotivo, 50);
+                setTimeout(applyMotivo, 250);
             }
             
             // Cargar nuevos campos operativos

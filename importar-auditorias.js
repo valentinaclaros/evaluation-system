@@ -296,26 +296,46 @@ function matchMotivoToChecklist(motivoRaw, callType) {
     return motivoRaw.substring(0, 300);
 }
 
-// Mapeo de frases del Excel (Xtronaut error) → valor de la checklist. Intuitivo: errores a checklist, no a notas.
+// Mapeo de frases del Excel (Xtronaut error) → checklist. Flexible: distintas formas verbales, redacción y typos.
 var EXCEL_ERROR_TO_CHECKLIST = [
-    { pattern: /tiempos de cancelación no se mencionan|tiempos de cancelación incorrectos|no se dan tiempos de cancelación/i, ahorros: 'Se dan tiempos de cancelación incorrectos', credito: 'TC: Se dan tiempos de cancelación incorrectos' },
-    { pattern: /no se validaron tags/i, ahorros: 'No se validaron Tags', credito: 'TC: No se validaron Tags' },
-    { pattern: /no se revisó el estado del producto en la herramienta/i, ahorros: 'No se revisó el estado del producto en la herramienta', credito: 'TC: No se revisó el estado del producto en la herramienta' },
-    { pattern: /no se realizó hf/i, ahorros: 'No se realizó HF', credito: 'TC: No se realizó HF' },
-    { pattern: /no se indagó en el motivo de cancelación/i, ahorros: 'No se indagó en el motivo de cancelación', credito: 'TC: No se indagó en el motivo de cancelación' },
-    { pattern: /no se leyeron beneficios/i, ahorros: 'No se leyeron beneficios', credito: 'TC: No se leyeron beneficios' },
-    { pattern: /no se validó si el cliente tiene cdt activo/i, ahorros: 'No se validó si el cliente tiene CDT activo', credito: null },
-    { pattern: /no se hizo retención/i, ahorros: 'No se hizo retención', credito: 'TC: No se hizo retención' },
-    { pattern: /no se validó el producto \(saldo|no se validó el producto \(deuda/i, ahorros: 'No se validó el producto (saldo en cajita, saldos mayores a $0,99, préstamo activo, etc.)', credito: 'TC: No se validó el producto (deuda activa, saldo a favor, compras en proceso, complaints activos, etc.)' },
-    { pattern: /no se solicitó aproximación de saldo/i, ahorros: 'No se solicitó aproximación de saldo', credito: null },
-    { pattern: /no se leyeron condiciones de cancelación/i, ahorros: 'No se leyeron condiciones de cancelación', credito: 'TC: No se leyeron condiciones de cancelación' },
-    { pattern: /no se cancelaron las tarjetas|no se cancela(n)?\s*(las?\s*)?tarjetas?(\s*virtual(es)?)?/i, ahorros: 'No se cancelaron las tarjetas (físicas/virtuales)', credito: 'TC: No se cancelaron las tarjetas (físicas/virtuales)' },
-    { pattern: /no se escaló secondary job|no se escaló secundary job/i, ahorros: 'No se escaló Secundary Job', credito: 'TC: No se escaló Secundary Job' },
-    { pattern: /no se confirmó la gestión realizada/i, ahorros: 'No se confirmó la gestión realizada', credito: 'TC: No se confirmó la gestión realizada' },
-    { pattern: /no se promueve case management/i, ahorros: 'No se promueve case management', credito: 'TC: No se promueve case management' },
-    { pattern: /no se promueve encuesta/i, ahorros: 'No se promueve encuesta', credito: 'TC: No se promueve encuesta' },
-    { pattern: /no se validó el tipo de tarjeta de crédito/i, ahorros: null, credito: 'TC: No se validó el tipo de tarjeta de crédito que tenía el cliente' }
+    { pattern: /tiempos?\s*(de\s*)?cancelaci[oó]n|no se dan tiempos|tiempos incorrectos|no se mencionan tiempos/i, ahorros: 'Se dan tiempos de cancelación incorrectos', credito: 'TC: Se dan tiempos de cancelación incorrectos' },
+    { pattern: /validar(on)?\s*tags?|tags?\s*(no\s*)?validad[oa]s?/i, ahorros: 'No se validaron Tags', credito: 'TC: No se validaron Tags' },
+    { pattern: /revis[oó]\s*estado del producto|estado del producto en la herramienta|revis[oa]r\s*producto.*herramienta/i, ahorros: 'No se revisó el estado del producto en la herramienta', credito: 'TC: No se revisó el estado del producto en la herramienta' },
+    { pattern: /realiz[oó]\s*hf|no\s*hf\s*|hf\s*no\s*realiz/i, ahorros: 'No se realizó HF', credito: 'TC: No se realizó HF' },
+    { pattern: /indag[oó].*motivo|motivo de cancelaci[oó]n.*indag|no indag.*motivo/i, ahorros: 'No se indagó en el motivo de cancelación', credito: 'TC: No se indagó en el motivo de cancelación' },
+    { pattern: /leyeron?\s*beneficios|beneficios.*no\s*le(y|í)/i, ahorros: 'No se leyeron beneficios', credito: 'TC: No se leyeron beneficios' },
+    { pattern: /cdt\s*activo|cliente tiene cdt|validar.*cdt/i, ahorros: 'No se validó si el cliente tiene CDT activo', credito: null },
+    { pattern: /retenci[oó]n|no\s*hizo retenci[oó]n|hizo\s*retenci/i, ahorros: 'No se hizo retención', credito: 'TC: No se hizo retención' },
+    { pattern: /valid[oó].*producto.*saldo|validar producto.*deuda|producto.*saldo en cajita|deuda activa.*saldo/i, ahorros: 'No se validó el producto (saldo en cajita, saldos mayores a $0,99, préstamo activo, etc.)', credito: 'TC: No se validó el producto (deuda activa, saldo a favor, compras en proceso, complaints activos, etc.)' },
+    { pattern: /aproximaci[oó]n de saldo|solicit[oó].*saldo|saldo.*aproximaci/i, ahorros: 'No se solicitó aproximación de saldo', credito: null },
+    { pattern: /condiciones de cancelaci[oó]n|leyeron?\s*condiciones|leer condiciones/i, ahorros: 'No se leyeron condiciones de cancelación', credito: 'TC: No se leyeron condiciones de cancelación' },
+    { pattern: /tarjeta(s)?\s*(virtual(es)?|físicas?)?.*cancel|cancel(ar|aron|ó|a).*tarjeta(s)?\s*(virtual(es)?)?|no\s*(se\s*)?cancel[oóa].*tarjeta|tarjeta\s*virtual/i, ahorros: 'No se cancelaron las tarjetas (físicas/virtuales)', credito: 'TC: No se cancelaron las tarjetas (físicas/virtuales)' },
+    { pattern: /escal[oó].*secondary|secondary\s*job|secundary\s*job|no\s*escal.*job/i, ahorros: 'No se escaló Secundary Job', credito: 'TC: No se escaló Secundary Job' },
+    { pattern: /gesti[oó]n realizada|confirm[oó].*gesti|gestión.*confirm/i, ahorros: 'No se confirmó la gestión realizada', credito: 'TC: No se confirmó la gestión realizada' },
+    { pattern: /case\s*management|promueve.*case|promovi[oó].*case/i, ahorros: 'No se promueve case management', credito: 'TC: No se promueve case management' },
+    { pattern: /promueve\s*encuesta|promovi[oó].*encuesta|encuesta.*no\s*promueve/i, ahorros: 'No se promueve encuesta', credito: 'TC: No se promueve encuesta' },
+    { pattern: /tipo de tarjeta de cr[eé]dito|valid[oó].*tipo.*tarjeta|tarjeta.*cr[eé]dito.*tipo/i, ahorros: null, credito: 'TC: No se validó el tipo de tarjeta de crédito que tenía el cliente' }
 ];
+// Interpretación flexible por palabras clave: si la línea suena al error aunque no coincida exactamente
+var FLEXIBLE_KEYWORDS = [
+    { keywords: ['tarjeta', 'virtual', 'cancel'], ahorros: 'No se cancelaron las tarjetas (físicas/virtuales)', credito: 'TC: No se cancelaron las tarjetas (físicas/virtuales)' },
+    { keywords: ['tarjeta', 'cancel'], ahorros: 'No se cancelaron las tarjetas (físicas/virtuales)', credito: 'TC: No se cancelaron las tarjetas (físicas/virtuales)' },
+    { keywords: ['tiempo', 'cancelación'], ahorros: 'Se dan tiempos de cancelación incorrectos', credito: 'TC: Se dan tiempos de cancelación incorrectos' },
+    { keywords: ['tags', 'valid'], ahorros: 'No se validaron Tags', credito: 'TC: No se validaron Tags' },
+    { keywords: ['beneficios', 'leer'], ahorros: 'No se leyeron beneficios', credito: 'TC: No se leyeron beneficios' },
+    { keywords: ['case', 'management'], ahorros: 'No se promueve case management', credito: 'TC: No se promueve case management' },
+    { keywords: ['encuesta', 'promueve'], ahorros: 'No se promueve encuesta', credito: 'TC: No se promueve encuesta' },
+    { keywords: ['retención', 'hizo'], ahorros: 'No se hizo retención', credito: 'TC: No se hizo retención' },
+    { keywords: ['secondary', 'job'], ahorros: 'No se escaló Secundary Job', credito: 'TC: No se escaló Secundary Job' },
+    { keywords: ['gestión', 'confirm'], ahorros: 'No se confirmó la gestión realizada', credito: 'TC: No se confirmó la gestión realizada' }
+];
+function lineMatchesKeywords(line, keywordList) {
+    var lower = line.toLowerCase().normalize('NFD').replace(/\u0300/g, '');
+    for (var i = 0; i < keywordList.length; i++) {
+        if (lower.indexOf(keywordList[i].toLowerCase().normalize('NFD').replace(/\u0300/g, '')) === -1) return false;
+    }
+    return true;
+}
 function mapExcelErrorsToChecklist(restText, callType) {
     var errors = [];
     var notesParts = [];
@@ -342,7 +362,7 @@ function mapExcelErrorsToChecklist(restText, callType) {
             continue;
         }
         var matched = false;
-        // Una misma línea puede contener varios errores (ej. "No se cancela tarjeta virtual No se dan tiempos de cancelación")
+        // 1) Patrones (gramática variada: canceló/cancela/cancelaron, validar/validó, etc.)
         for (var j = 0; j < EXCEL_ERROR_TO_CHECKLIST.length; j++) {
             var rule = EXCEL_ERROR_TO_CHECKLIST[j];
             if (rule.pattern.test(line)) {
@@ -350,6 +370,19 @@ function mapExcelErrorsToChecklist(restText, callType) {
                 if ((isAhorros || isMulti) && rule.ahorros && errors.indexOf(rule.ahorros) === -1) errors.push(rule.ahorros);
                 if ((isTarjeta || isMulti) && rule.credito && errors.indexOf(rule.credito) === -1) errors.push(rule.credito);
                 matched = true;
+            }
+        }
+        // 2) Si no coincidió: interpretar por palabras clave (flexible con redacción/typos)
+        if (!matched && line.length > 3) {
+            for (var k = 0; k < FLEXIBLE_KEYWORDS.length; k++) {
+                var flex = FLEXIBLE_KEYWORDS[k];
+                if (lineMatchesKeywords(line, flex.keywords)) {
+                    if (isTarjeta && flex.credito && errors.indexOf(flex.credito) === -1) errors.push(flex.credito);
+                    if ((isAhorros || isMulti) && flex.ahorros && errors.indexOf(flex.ahorros) === -1) errors.push(flex.ahorros);
+                    if ((isTarjeta || isMulti) && flex.credito && errors.indexOf(flex.credito) === -1) errors.push(flex.credito);
+                    matched = true;
+                    break;
+                }
             }
         }
         if (!matched && line.length > 0) notesParts.push(line);
@@ -443,14 +476,19 @@ function mapRowToAudit(raw) {
         var mapped = mapExcelErrorsToChecklist(parsed.restText || '', callType);
         errors = mapped.errors;
         callNotes = mapped.callNotes || '';
-        // Si hubo texto en Xtronaut pero ningún error de la checklist: marcar "Otro" (aplica a todos los motivos)
-        if (errors.length === 0) {
-            if (callType === 'cancelacion_tarjeta_credito') errors = ['TC: Otro'];
-            else if (callType === 'cancelacion_cuenta_ahorros') errors = ['Otro'];
-            else if (callType === 'cancelacion_multiproducto') errors = ['Otro', 'TC: Otro'];
-            else errors = ['Otro'];
+        // Si criticidad es Perfecto no se asignan errores ni "Otro"
+        if (criticality !== 'perfecto') {
+            if (errors.length === 0) {
+                if (callType === 'cancelacion_tarjeta_credito') errors = ['TC: Otro'];
+                else if (callType === 'cancelacion_cuenta_ahorros') errors = ['Otro'];
+                else if (callType === 'cancelacion_multiproducto') errors = ['Otro', 'TC: Otro'];
+                else errors = ['Otro'];
+            }
+            errorDescription = errors.length > 0 ? errors.join('; ') : (parsed.restText || '');
+        } else {
+            errors = [];
+            errorDescription = '';
         }
-        errorDescription = errors.length > 0 ? errors.join('; ') : (parsed.restText || '');
     }
 
     // Auditor: Col C → nombre completo (Andrés G → Andrés Gayón, etc.)

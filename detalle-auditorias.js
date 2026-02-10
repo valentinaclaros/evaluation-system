@@ -411,7 +411,7 @@ function renderAudits(audits) {
             </div>
             ` : ''}
             
-            ${errorsList.length > 0 ? `
+            ${errorsList.length > 0 && audit.criticality !== 'perfecto' ? `
             <div class="audit-errors">
                 <div class="audit-errors-title">Errores Detectados:</div>
                 <ul class="audit-errors-list">
