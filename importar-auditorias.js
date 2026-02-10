@@ -6,7 +6,7 @@ let parsedRows = []; // { raw: {...}, mapped: {...} }[]
 
 function initPdfWorker() {
     if (typeof pdfjsLib !== 'undefined' && !pdfjsLib.GlobalWorkerOptions.workerSrc) {
-        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@4.0.379/legacy/build/pdf.worker.min.js';
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
     }
 }
 
@@ -67,12 +67,30 @@ function handleFileSelect(e) {
     else reader.readAsArrayBuffer(file);
 }
 
+function loadPdfLibrary() {
+    return new Promise(function(resolve, reject) {
+        if (typeof pdfjsLib !== 'undefined') {
+            initPdfWorker();
+            return resolve();
+        }
+        var s = document.createElement('script');
+        s.src = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js';
+        s.onload = function() {
+            initPdfWorker();
+            if (typeof pdfjsLib !== 'undefined') resolve();
+            else reject(new Error('PDF.js no se cargó. Prueba en otra red o sube el archivo en formato Excel/CSV.'));
+        };
+        s.onerror = function() { reject(new Error('No se pudo cargar la librería PDF. Usa Excel o CSV, o abre la página desde tu PC.')); };
+        document.head.appendChild(s);
+    });
+}
+
 async function parsePDF(arrayBuffer) {
-    initPdfWorker();
+    await loadPdfLibrary();
     if (typeof pdfjsLib === 'undefined') {
-        throw new Error('Librería PDF no cargada. Recarga la página.');
+        throw new Error('Librería PDF no disponible. Sube el archivo en Excel o CSV.');
     }
-    pdfjsLib.GlobalWorkerOptions.workerSrc = pdfjsLib.GlobalWorkerOptions.workerSrc || 'https://cdn.jsdelivr.net/npm/pdfjs-dist@4.0.379/legacy/build/pdf.worker.min.js';
+    pdfjsLib.GlobalWorkerOptions.workerSrc = pdfjsLib.GlobalWorkerOptions.workerSrc || 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
     const doc = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
     const numPages = doc.numPages;
     const allLines = [];
@@ -81,29 +99,33 @@ async function parsePDF(arrayBuffer) {
         const content = await page.getTextContent();
         const byY = {};
         content.items.forEach(item => {
-            const y = Math.round((item.transform[5] || 0) * 10) / 10;
-            if (!byY[y]) byY[y] = [];
-            byY[y].push({ str: item.str || '', x: item.transform[4] || 0 });
+            var y = item.transform[5] || 0;
+            var yKey = Math.round(y / 2) * 2;
+            if (!byY[yKey]) byY[yKey] = [];
+            byY[yKey].push({ str: item.str || '', x: item.transform[4] || 0 });
         });
         const sortedY = Object.keys(byY).map(Number).sort((a, b) => b - a);
         sortedY.forEach(y => {
             byY[y].sort((a, b) => a.x - b.x);
             const line = byY[y].map(i => i.str).join('\t');
-            if (line.trim()) allLines.push(line);
+            if (line.length > 2) allLines.push(line);
         });
     }
-    if (allLines.length < 2) return;
-    let headers = allLines[0].split(/\t+/).map(h => h.trim()).filter(Boolean);
-    if (headers.length < 2) headers = allLines[0].split(/\s{2,}/).map(h => h.trim()).filter(Boolean);
-    if (headers.length < 2) return;
-    for (let i = 1; i < allLines.length; i++) {
-        let values = allLines[i].split(/\t+/).map(v => v.trim());
-        if (values.length < 2) values = allLines[i].split(/\s{2,}/).map(v => v.trim());
-        if (values.every(v => !v)) continue;
-        const raw = {};
-        headers.forEach((h, j) => { raw[h] = values[j] != null ? String(values[j]).trim() : ''; });
-        const mapped = mapRowToAudit(raw);
-        if (mapped) parsedRows.push({ raw, mapped });
+    if (allLines.length < 1) return;
+    var firstLine = allLines[0];
+    var headers = firstLine.split(/\t+/).map(h => h.trim()).filter(Boolean);
+    if (headers.length < 2) headers = firstLine.split(/\s{2,}/).map(h => h.trim()).filter(Boolean);
+    if (headers.length < 2) headers = firstLine.split(/\s+/).filter(Boolean);
+    for (var i = 1; i < allLines.length; i++) {
+        var rowLine = allLines[i];
+        var values = rowLine.split(/\t+/).map(v => v.trim());
+        if (values.length < 2) values = rowLine.split(/\s{2,}/).map(v => v.trim());
+        if (values.length < 2) values = rowLine.split(/\s+/);
+        if (values.every(function(v) { return !v; })) continue;
+        var raw = {};
+        headers.forEach(function(h, j) { raw[h] = values[j] != null ? String(values[j]).trim() : ''; });
+        var mapped = mapRowToAudit(raw);
+        if (mapped) parsedRows.push({ raw: raw, mapped: mapped });
     }
 }
 
@@ -141,20 +163,69 @@ function parseCSVLine(line) {
     return result;
 }
 
+function rowLooksLikeHeader(row) {
+    if (!row || !row.length) return false;
+    var line = (row.map(function(c) { return String(c || '').toLowerCase(); })).join(' ');
+    return line.indexOf('fecha') >= 0 || line.indexOf('date') >= 0 || line.indexOf('criticidad') >= 0
+        || line.indexOf('product') >= 0 || line.indexOf('agent') >= 0 || line.indexOf('analiz') >= 0
+        || line.indexOf('customer') >= 0 || line.indexOf('tnps') >= 0 || line.indexOf('person view') >= 0
+        || line.indexOf('xtronaut') >= 0 || line.indexOf('actor_affiliation') >= 0;
+}
+
 function parseExcel(arrayBuffer) {
-    const wb = XLSX.read(arrayBuffer, { type: 'array' });
-    const firstSheet = wb.Sheets[wb.SheetNames[0]];
-    const data = XLSX.utils.sheet_to_json(firstSheet, { header: 1, defval: '' });
+    const wb = XLSX.read(arrayBuffer, { type: 'array', cellDates: true });
+    var data = null;
+    var sheetNames = wb.SheetNames || [];
+    for (var s = 0; s < sheetNames.length; s++) {
+        var sheet = wb.Sheets[sheetNames[s]];
+        var sheetData = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: '', raw: false });
+        if (!sheetData || sheetData.length < 2) continue;
+        for (var r = 0; r < Math.min(15, sheetData.length); r++) {
+            if (rowLooksLikeHeader(sheetData[r])) {
+                data = sheetData;
+                break;
+            }
+        }
+        if (!data && sheetData.length >= 2) data = sheetData;
+        if (data) break;
+    }
     if (!data || data.length < 2) return;
-    const headers = (data[0] || []).map(h => String(h).trim());
-    const headerMap = normalizeHeaders(headers);
-    for (let i = 1; i < data.length; i++) {
+    var headerRowIndex = 0;
+    for (var r = 0; r < Math.min(10, data.length); r++) {
+        if (rowLooksLikeHeader(data[r])) {
+            headerRowIndex = r;
+            break;
+        }
+    }
+    const headers = (data[headerRowIndex] || []).map(function(h) { return String(h).trim(); });
+    var startData = headerRowIndex + 1;
+    for (var i = startData; i < data.length; i++) {
         const row = data[i] || [];
         const raw = {};
-        headers.forEach((h, j) => { raw[h] = row[j] != null ? String(row[j]).trim() : ''; });
-        if (Object.values(raw).every(v => !v)) continue;
+        headers.forEach(function(h, j) {
+            var val = row[j];
+            if (val != null && typeof val === 'object' && val.getMonth) val = val.toISOString ? val.toISOString().split('T')[0] : String(val);
+            raw[h] = val != null ? String(val).trim() : '';
+        });
+        if (Object.keys(raw).every(function(k) { return !raw[k]; })) continue;
         const mapped = mapRowToAudit(raw);
-        if (mapped) parsedRows.push({ raw, mapped });
+        if (mapped) parsedRows.push({ raw: raw, mapped: mapped });
+    }
+    // Si no se leyó nada, intentar con la primera fila como cabecera (por si las columnas tienen otros nombres)
+    if (parsedRows.length === 0 && data.length >= 2) {
+        var h0 = (data[0] || []).map(function(h) { return String(h).trim(); });
+        for (var i = 1; i < data.length; i++) {
+            var row = data[i] || [];
+            var raw = {};
+            h0.forEach(function(h, j) {
+                var val = row[j];
+                if (val != null && typeof val === 'object' && val.getMonth) val = val.toISOString ? val.toISOString().split('T')[0] : String(val);
+                raw[h] = val != null ? String(val).trim() : '';
+            });
+            if (Object.keys(raw).every(function(k) { return !raw[k]; })) continue;
+            var mapped = mapRowToAudit(raw);
+            if (mapped) parsedRows.push({ raw: raw, mapped: mapped });
+        }
     }
 }
 
@@ -179,6 +250,102 @@ function getCell(raw, ...possibleKeys) {
     return '';
 }
 
+// Auditor Excel (Col C) → nombre completo según registrar auditoría
+var AUDITOR_MAP = {
+    'andrés g': 'Andrés Gayón', 'andres g': 'Andrés Gayón',
+    'daniel a': 'Daniel Aristizabal',
+    'daniel r': 'Daniel Rodríguez', 'daniel rodriguez': 'Daniel Rodríguez',
+    'nicolás g': 'Nicolás González', 'nicolas g': 'Nicolás González',
+    'paula m': 'Paula Morales',
+    'valentina c': 'Valentina Claros'
+};
+function normalizeAuditor(val) {
+    if (!val || !String(val).trim()) return 'Sin asignar';
+    var k = String(val).trim().toLowerCase();
+    return AUDITOR_MAP[k] || val.trim();
+}
+
+// tNPS Excel (Col G): Null→Sin respuesta, Promoter/Neutral/Detractor → igual
+function normalizeTnps(val) {
+    if (!val || String(val).trim() === '') return 'null';
+    var v = String(val).trim().toLowerCase();
+    if (v === 'null') return 'null';
+    if (v === 'promoter' || v === 'promotor') return 'promoter';
+    if (v === 'neutral') return 'neutral';
+    if (v === 'detractor') return 'detractor';
+    var n = parseInt(val, 10);
+    if (!isNaN(n)) {
+        if (n >= 9) return 'promoter';
+        if (n >= 7) return 'neutral';
+        return 'detractor';
+    }
+    return 'null';
+}
+
+// Motivos de cancelación del formulario (registrar-llamada) para mapear "Motivo: XXX" del Excel
+var MOTIVOS_AHORROS = ['No la usa/No la necesita', 'Tiene más cuentas', 'Deseaba Tarjeta de Crédito', 'Inconformidad por cobro 4x1000', 'Falta de beneficios', 'Cobro de comisiones (retiros o compras internacionales)', 'Mala experiencia', 'No sabe usar la App', 'Recontacto', 'Otro'];
+var MOTIVOS_CREDITO = ['No la usa/No la necesita', 'Tiene más tarjetas', 'Inconforme con cupo aprobado', 'Inconforme con tasa de interés', 'Inconforme con interés cobrado', 'Liberar capacidad de endeudamiento', 'No hay beneficios', 'Cobro de comisiones (avances o tasa de cambio)', 'Funcionalidades no disponibles', 'Mala experiencia', 'Cobro de cuota de manejo', 'Tarjeta sin cupo (Abre Caminos)', 'No sabe usar la App', 'Recontacto', 'Otro'];
+function matchMotivoToChecklist(motivoRaw, callType) {
+    if (!motivoRaw || !motivoRaw.trim()) return null;
+    var m = motivoRaw.trim().toLowerCase();
+    var list = callType === 'cancelacion_tarjeta_credito' ? MOTIVOS_CREDITO : MOTIVOS_AHORROS;
+    for (var i = 0; i < list.length; i++) {
+        if (m.indexOf(list[i].toLowerCase()) >= 0) return list[i];
+        if (list[i].toLowerCase().indexOf(m) >= 0) return list[i];
+    }
+    return motivoRaw.substring(0, 300);
+}
+
+// Mapeo de frases del Excel (Xtronaut error) → valor de la checklist. callType para prefijo TC:
+var EXCEL_ERROR_TO_CHECKLIST = [
+    { pattern: /tiempos de cancelación no se mencionan|tiempos de cancelación incorrectos/i, ahorros: 'Se dan tiempos de cancelación incorrectos', credito: 'TC: Se dan tiempos de cancelación incorrectos' },
+    { pattern: /no se validaron tags/i, ahorros: 'No se validaron Tags', credito: 'TC: No se validaron Tags' },
+    { pattern: /no se revisó el estado del producto en la herramienta/i, ahorros: 'No se revisó el estado del producto en la herramienta', credito: 'TC: No se revisó el estado del producto en la herramienta' },
+    { pattern: /no se realizó hf/i, ahorros: 'No se realizó HF', credito: 'TC: No se realizó HF' },
+    { pattern: /no se indagó en el motivo de cancelación/i, ahorros: 'No se indagó en el motivo de cancelación', credito: 'TC: No se indagó en el motivo de cancelación' },
+    { pattern: /no se leyeron beneficios/i, ahorros: 'No se leyeron beneficios', credito: 'TC: No se leyeron beneficios' },
+    { pattern: /no se validó si el cliente tiene cdt activo/i, ahorros: 'No se validó si el cliente tiene CDT activo', credito: null },
+    { pattern: /no se hizo retención/i, ahorros: 'No se hizo retención', credito: 'TC: No se hizo retención' },
+    { pattern: /no se validó el producto \(saldo|no se validó el producto \(deuda/i, ahorros: 'No se validó el producto (saldo en cajita, saldos mayores a $0,99, préstamo activo, etc.)', credito: 'TC: No se validó el producto (deuda activa, saldo a favor, compras en proceso, complaints activos, etc.)' },
+    { pattern: /no se solicitó aproximación de saldo/i, ahorros: 'No se solicitó aproximación de saldo', credito: null },
+    { pattern: /no se leyeron condiciones de cancelación/i, ahorros: 'No se leyeron condiciones de cancelación', credito: 'TC: No se leyeron condiciones de cancelación' },
+    { pattern: /no se cancelaron las tarjetas/i, ahorros: 'No se cancelaron las tarjetas (físicas/virtuales)', credito: 'TC: No se cancelaron las tarjetas (físicas/virtuales)' },
+    { pattern: /no se escaló secondary job|no se escaló secundary job/i, ahorros: 'No se escaló Secundary Job', credito: 'TC: No se escaló Secundary Job' },
+    { pattern: /no se confirmó la gestión realizada/i, ahorros: 'No se confirmó la gestión realizada', credito: 'TC: No se confirmó la gestión realizada' },
+    { pattern: /no se promueve case management/i, ahorros: 'No se promueve case management', credito: 'TC: No se promueve case management' },
+    { pattern: /no se promueve encuesta/i, ahorros: 'No se promueve encuesta', credito: 'TC: No se promueve encuesta' },
+    { pattern: /no se validó el tipo de tarjeta de crédito/i, ahorros: null, credito: 'TC: No se validó el tipo de tarjeta de crédito que tenía el cliente' }
+];
+function mapExcelErrorsToChecklist(restText, callType) {
+    var errors = [];
+    var notesParts = [];
+    var isTarjeta = callType === 'cancelacion_tarjeta_credito';
+    var isAhorros = callType === 'cancelacion_cuenta_ahorros';
+    var isMulti = callType === 'cancelacion_multiproducto';
+    var lines = String(restText || '').split(/\n|\.\s+|\?\s+/).map(function(s) { return s.trim(); }).filter(Boolean);
+    for (var i = 0; i < lines.length; i++) {
+        var line = lines[i];
+        var isQuestion = /^\s*¿?por qué|^\s*¿?porque|^\s*¿/i.test(line) || (line.indexOf('?') >= 0 && line.length < 120);
+        if (isQuestion || line.length > 200) {
+            notesParts.push(line);
+            continue;
+        }
+        var matched = false;
+        for (var j = 0; j < EXCEL_ERROR_TO_CHECKLIST.length; j++) {
+            var rule = EXCEL_ERROR_TO_CHECKLIST[j];
+            if (rule.pattern.test(line)) {
+                if (isTarjeta && rule.credito && errors.indexOf(rule.credito) === -1) errors.push(rule.credito);
+                if ((isAhorros || isMulti) && rule.ahorros && errors.indexOf(rule.ahorros) === -1) errors.push(rule.ahorros);
+                if ((isTarjeta || isMulti) && rule.credito && errors.indexOf(rule.credito) === -1) errors.push(rule.credito);
+                matched = true;
+                break;
+            }
+        }
+        if (!matched && line.length > 0) notesParts.push(line);
+    }
+    return { errors: errors, callNotes: notesParts.join(' ').trim() };
+}
+
 function parseDate(val) {
     if (!val) return '';
     const s = String(val).trim();
@@ -194,111 +361,120 @@ function parseDate(val) {
 }
 
 function mapRowToAudit(raw) {
-    const fecha = parseDate(getCell(raw, 'Fecha', 'Date', 'fecha'));
-    const criticidad = getCell(raw, 'Criticidad', 'criticality', 'criticidad');
-    const auditor = getCell(raw, '¿Quién analizó el caso?', 'Quién analizó el caso', 'Auditor', 'auditor');
-    const product = getCell(raw, 'Product', 'product', 'Producto');
-    const errorDesc = getCell(raw, 'Xtronaut error', 'Xtronaut error', 'error', 'Error');
-    const tnpsVal = getCell(raw, 'tNPS', 'tnps', 'TNPS');
-    const bpoVal = getCell(raw, 'actor_affiliation', 'actor_affiliation', 'BPO', 'bpo');
-    const customerId = getCell(raw, 'Customer_ID', 'Customer_ID', 'customer_id', 'Customer ID');
-    const personView = getCell(raw, 'Person View', 'Person View', 'person view', 'enlace', 'Enlace PV');
+    // Col A = Fecha de la llamada
+    var fecha = parseDate(getCell(raw, 'Fecha', 'Date', 'fecha'));
+    if (!fecha && raw && typeof raw === 'object') {
+        var keys = Object.keys(raw);
+        for (var k = 0; k < keys.length; k++) {
+            fecha = parseDate(raw[keys[k]]);
+            if (fecha) break;
+        }
+    }
+    if (!fecha) fecha = new Date().toISOString().split('T')[0];
 
-    if (!fecha) return null;
+    var criticidad = getCell(raw, 'Criticidad', 'criticality', 'criticidad');
+    var auditorRaw = getCell(raw, '¿Quién analizó el caso?', 'Quién analizó el caso', 'Auditor', 'auditor');
+    var product = getCell(raw, 'Product', 'product', 'Producto');
+    var errorDesc = getCell(raw, 'Xtronaut error', 'Xtronaut error', 'error', 'Error');
+    var tnpsVal = getCell(raw, 'tNPS', 'tnps', 'TNPS');
+    var bpoVal = getCell(raw, 'actor_affiliation', 'actor_affiliation', 'BPO', 'bpo');
+    var customerId = getCell(raw, 'Customer_ID', 'Customer_ID', 'customer_id', 'Customer ID');
+    var personView = getCell(raw, 'Person View', 'Person View', 'person view', 'enlace', 'Enlace PV');
 
-    let callType = 'cancelacion_cuenta_ahorros';
-    const p = (product || '').toLowerCase();
+    // Razón de contacto: Col D Product → Credit Card / Savings / Multiproduct
+    var callType = 'cancelacion_cuenta_ahorros';
+    var p = (product || '').toLowerCase();
     if (p.includes('credit') || p.includes('tarjeta') || p === 'credit card') callType = 'cancelacion_tarjeta_credito';
     else if (p.includes('multi') || p === 'multiproduct') callType = 'cancelacion_multiproducto';
     else if (p.includes('saving') || p.includes('ahorro') || p === 'savings') callType = 'cancelacion_cuenta_ahorros';
 
-    // Criticidad: Crítico, Alto, Medio = iguales; N/A = Perfecto
-    let criticality = 'medio';
-    const c = (criticidad || '').toLowerCase().trim();
+    // Nivel de Criticidad: Col B → Crítico/Alto/Medio; N/A = Perfecto
+    var criticality = 'medio';
+    var c = (criticidad || '').toLowerCase().trim();
     if (c.includes('crítico') || c.includes('critico')) criticality = 'critico';
     else if (c.includes('alto')) criticality = 'alto';
     else if (c.includes('medio')) criticality = 'medio';
     else if (c === 'n/a' || c.includes('perfecto')) criticality = 'perfecto';
 
-    let bpo = (bpoVal || '').toLowerCase().includes('konecta') ? 'konecta' : 'teleperformance';
+    var bpo = (bpoVal || '').toLowerCase().includes('konecta') ? 'konecta' : 'teleperformance';
     if (bpoVal && bpoVal.trim()) bpo = bpoVal.trim().toLowerCase();
 
-    // TNPS: Null o vacío = sin respuesta (guardamos 'null')
-    let tnps = null;
-    if (tnpsVal && String(tnpsVal).trim() && String(tnpsVal).toLowerCase() !== 'null') {
-        const n = parseInt(tnpsVal, 10);
-        if (!isNaN(n)) tnps = n;
-    } else {
-        tnps = 'null'; // Sin respuesta
-    }
+    // Calificación TNPS: Col G — Null: Sin respuesta; Promoter/Neutral/Detractor
+    var tnps = normalizeTnps(tnpsVal);
 
-    // Fecha auditoría = un día después de la fecha de la llamada
-    const callDateObj = new Date(fecha);
+    // Fecha de auditoría = un día después de la fecha de la llamada (Col A)
+    var callDateObj = new Date(fecha);
     callDateObj.setDate(callDateObj.getDate() + 1);
-    const auditDate = callDateObj.toISOString().split('T')[0];
+    var auditDate = callDateObj.toISOString().split('T')[0];
 
-    // Duración de llamada y motivo de cancelación están dentro de Xtronaut error
-    let callDuration = 0;
-    let cancellationReason = null;
-    let errorDescription = errorDesc || '';
+    // Col F Xtronaut error: Motivo (según checklist), Llamada MM:SS, errores (mapeo a checklist), notas adicionales
+    var callDuration = 0;
+    var cancellationReason = null;
+    var errors = [];
+    var callNotes = '';
+    var errorDescription = '';
     if (errorDesc && errorDesc.trim()) {
-        const parsed = parseXtronautError(errorDesc);
+        var parsed = parseXtronautError(errorDesc);
         callDuration = parsed.durationMinutes;
-        cancellationReason = parsed.cancellationReason || null;
-        if (parsed.restText) errorDescription = parsed.restText.trim() || errorDesc;
+        cancellationReason = matchMotivoToChecklist(parsed.cancellationReason, callType);
+        var mapped = mapExcelErrorsToChecklist(parsed.restText || '', callType);
+        errors = mapped.errors;
+        callNotes = mapped.callNotes || '';
+        errorDescription = errors.length > 0 ? errors.join('; ') : (parsed.restText || '');
     }
+
+    // Auditor: Col C → nombre completo (Andrés G → Andrés Gayón, etc.)
+    var auditor = normalizeAuditor(auditorRaw);
 
     return {
         callDate: fecha,
-        auditDate,
+        auditDate: auditDate,
         customerId: customerId || 'Sin ID',
-        callType,
-        cancellationReason,
+        callType: callType,
+        cancellationReason: cancellationReason,
         enlacePv: personView || null,
-        bpo,
+        bpo: bpo,
         agentId: null,
-        auditor: auditor || 'Sin asignar',
-        criticality,
-        tnps,
-        errorDescription,
-        errors: errorDescription ? [errorDescription] : [],
-        callNotes: '',
-        callDuration,
+        auditor: auditor,
+        criticality: criticality,
+        tnps: tnps,
+        errorDescription: errorDescription,
+        errors: errors,
+        callNotes: callNotes,
+        callDuration: callDuration,
         transferAttempt: '',
         excessiveHold: '',
         holdTime: 0
     };
 }
 
-// Extrae de Xtronaut error: Motivo: ..., HH:MM llamada., y el error (resto)
+// Extrae de Xtronaut error (Col F): Motivo: ..., Llamada: MM:SS o HH:MM llamada., resto = errores/notas
 function parseXtronautError(text) {
-    const t = String(text || '').trim();
-    let durationMinutes = 0;
-    let cancellationReason = null;
-    let errorDescription = t;
+    var t = String(text || '').trim();
+    var durationMinutes = 0;
+    var cancellationReason = null;
 
     // 1) Motivo: "Motivo: No la usa." o "Motivo: Quería crédito."
-    const motivoMatch = t.match(/Motivo:\s*([^.]*\.?)/i);
+    var motivoMatch = t.match(/Motivo:\s*([^.\n]*\.?)/i);
     if (motivoMatch && motivoMatch[1].trim()) {
         cancellationReason = motivoMatch[1].trim().replace(/\.$/, '').substring(0, 300) || null;
     }
 
-    // 2) Duración: "11:27 llamada." o "5:57 llamada."
-    const timeMatch = t.match(/(\d{1,2}):(\d{2})\s*llamada\.?/i);
+    // 2) Duración: "Llamada: 00:00" o "11:27 llamada."
+    var timeMatch = t.match(/Llamada:\s*(\d{1,2}):(\d{2})/i) || t.match(/(\d{1,2}):(\d{2})\s*llamada\.?/i);
     if (timeMatch) {
-        const minutes = parseInt(timeMatch[1], 10) || 0;
-        const seconds = parseInt(timeMatch[2], 10) || 0;
+        var minutes = parseInt(timeMatch[1], 10) || 0;
+        var seconds = parseInt(timeMatch[2], 10) || 0;
         durationMinutes = minutes + seconds / 60;
     }
 
-    // 3) Error: todo lo que sobra quitando "Motivo: X. " y "HH:MM llamada. "
-    let rest = t
-        .replace(/Motivo:\s*[^.]*\.?\s*/gi, '')
+    // 3) Resto: quitar Motivo y duración para mapear a errores checklist y notas
+    var rest = t
+        .replace(/Motivo:\s*[^.\n]*\.?\s*/gi, '')
+        .replace(/Llamada:\s*\d{1,2}:\d{2}\s*/gi, '')
         .replace(/\d{1,2}:\d{2}\s*llamada\.?\s*/gi, '')
         .trim();
-    if (rest) errorDescription = rest;
-
-    return { durationMinutes, cancellationReason, restText: errorDescription };
+    return { durationMinutes, cancellationReason, restText: rest };
 }
 
 function renderPreview() {
