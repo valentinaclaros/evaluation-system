@@ -426,12 +426,14 @@ function mapRowToAudit(raw) {
     var errorDescription = '';
     var excessiveHold = '';
     var holdTime = 0;
+    var transferAttempt = 'no';
     if (errorDesc && errorDesc.trim()) {
         var parsed = parseXtronautError(errorDesc);
         callDuration = parsed.durationMinutes;
         cancellationReason = matchMotivoToChecklist(parsed.cancellationReason, callType);
         excessiveHold = parsed.excessiveHold || '';
         holdTime = parsed.holdTimeMinutes || 0;
+        transferAttempt = parsed.transferAttempt || 'no';
         var mapped = mapExcelErrorsToChecklist(parsed.restText || '', callType);
         errors = mapped.errors;
         callNotes = mapped.callNotes || '';
@@ -457,7 +459,7 @@ function mapRowToAudit(raw) {
         errors: errors,
         callNotes: callNotes,
         callDuration: callDuration,
-        transferAttempt: '',
+        transferAttempt: transferAttempt,
         excessiveHold: excessiveHold,
         holdTime: holdTime
     };
@@ -470,6 +472,12 @@ function parseXtronautError(text) {
     var cancellationReason = null;
     var excessiveHold = 'no';
     var holdTimeMinutes = 0;
+    var transferAttempt = 'no';
+
+    // 0) ¿Agente intentó transferir? "Agente intentó transferir", "intentó transferir", etc. → Sí; si no dice nada → No
+    if (/agente\s+intent[oó]\s+transferir|intent[oó]\s+transferir\s*(la\s*llamada)?|intento\s+de\s+transferir/i.test(t)) {
+        transferAttempt = 'si';
+    }
 
     // 1) Motivo: "Motivo: No la usa." o "Motivo: Quería crédito."
     var motivoMatch = t.match(/Motivo:\s*([^.\n]*\.?)/i);
@@ -521,8 +529,11 @@ function parseXtronautError(text) {
         .replace(/se dej[oó]\s*esperando\s*(?:al cliente)?\.?\s*/gi, '')
         .replace(/tiempos?\s*injustificados?\.?\s*/gi, '')
         .replace(/dejaron esperando[^.]*\.?\s*/gi, '')
+        .replace(/agente\s+intent[oó]\s+transferir[^.]*\.?\s*/gi, '')
+        .replace(/intent[oó]\s+transferir\s*(la\s*llamada)?[^.]*\.?\s*/gi, '')
+        .replace(/intento\s+de\s+transferir[^.]*\.?\s*/gi, '')
         .trim();
-    return { durationMinutes, cancellationReason, excessiveHold, holdTimeMinutes, restText: rest };
+    return { durationMinutes, cancellationReason, excessiveHold, holdTimeMinutes, transferAttempt, restText: rest };
 }
 
 function renderPreview() {
