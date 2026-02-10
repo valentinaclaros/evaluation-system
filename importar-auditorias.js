@@ -322,10 +322,14 @@ function mapExcelErrorsToChecklist(restText, callType) {
     var isTarjeta = callType === 'cancelacion_tarjeta_credito';
     var isAhorros = callType === 'cancelacion_cuenta_ahorros';
     var isMulti = callType === 'cancelacion_multiproducto';
-    // Quitar cualquier resto de duración que haya quedado (ej. "llamada 30:24") para no llevarlo a notas
+    // Quitar duración de llamada y tiempos de espera que no deben ir a notas
     var cleaned = String(restText || '')
         .replace(/\d{1,2}:\d{2}\s*llamada\.?\s*/gi, '')
         .replace(/llamada\s+\d{1,2}:\d{2}\s*/gi, '')
+        .replace(/\d{1,2}\s*min(?:utos)?\s*(?:de\s*)?espera/gi, '')
+        .replace(/espera\s*(?:de\s*)?\d{1,2}\s*min(?:utos)?/gi, '')
+        .replace(/se dej[oó]\s*esperando[^.]*\.?\s*/gi, '')
+        .replace(/tiempos?\s*injustificados?\.?\s*/gi, '')
         .trim();
     var lines = cleaned.split(/\n|\.\s+|\?\s+/).map(function(s) { return s.trim(); }).filter(Boolean);
     for (var i = 0; i < lines.length; i++) {
@@ -414,16 +418,20 @@ function mapRowToAudit(raw) {
     callDateObj.setDate(callDateObj.getDate() + 1);
     var auditDate = callDateObj.toISOString().split('T')[0];
 
-    // Col F Xtronaut error: Motivo (según checklist), Llamada MM:SS, errores (mapeo a checklist), notas adicionales
+    // Col F Xtronaut error: Motivo, Llamada MM:SS, tiempos de espera > 2 min, errores (checklist), notas
     var callDuration = 0;
     var cancellationReason = null;
     var errors = [];
     var callNotes = '';
     var errorDescription = '';
+    var excessiveHold = '';
+    var holdTime = 0;
     if (errorDesc && errorDesc.trim()) {
         var parsed = parseXtronautError(errorDesc);
         callDuration = parsed.durationMinutes;
         cancellationReason = matchMotivoToChecklist(parsed.cancellationReason, callType);
+        excessiveHold = parsed.excessiveHold || '';
+        holdTime = parsed.holdTimeMinutes || 0;
         var mapped = mapExcelErrorsToChecklist(parsed.restText || '', callType);
         errors = mapped.errors;
         callNotes = mapped.callNotes || '';
@@ -450,16 +458,18 @@ function mapRowToAudit(raw) {
         callNotes: callNotes,
         callDuration: callDuration,
         transferAttempt: '',
-        excessiveHold: '',
-        holdTime: 0
+        excessiveHold: excessiveHold,
+        holdTime: holdTime
     };
 }
 
-// Extrae de Xtronaut error (Col F): Motivo, Llamada MM:SS (todas las variantes), resto = solo errores/notas (nunca la duración)
+// Extrae de Xtronaut error (Col F): Motivo, Llamada MM:SS, tiempos de espera > 2 min, resto = errores/notas
 function parseXtronautError(text) {
     var t = String(text || '').trim();
     var durationMinutes = 0;
     var cancellationReason = null;
+    var excessiveHold = 'no';
+    var holdTimeMinutes = 0;
 
     // 1) Motivo: "Motivo: No la usa." o "Motivo: Quería crédito."
     var motivoMatch = t.match(/Motivo:\s*([^.\n]*\.?)/i);
@@ -467,7 +477,7 @@ function parseXtronautError(text) {
         cancellationReason = motivoMatch[1].trim().replace(/\.$/, '').substring(0, 300) || null;
     }
 
-    // 2) Duración: "Llamada: 3:16", "Llamada 3:16", "llamada 3:16", "3:16 llamada", "3:16 llamada."
+    // 2) Duración de la llamada: "Llamada: 3:16", "Llamada 3:16", "3:16 llamada", etc.
     var timeMatch = t.match(/Llamada\s*:\s*(\d{1,2}):(\d{2})/i)
         || t.match(/Llamada\s+(\d{1,2}):(\d{2})/i)
         || t.match(/(\d{1,2}):(\d{2})\s*llamada\.?\s*/i);
@@ -477,7 +487,26 @@ function parseXtronautError(text) {
         durationMinutes = minutes + seconds / 60;
     }
 
-    // 3) Resto: quitar Motivo y TODAS las variantes de duración para que no lleguen a notas
+    // 3) Tiempos de espera > 2 min: "3 min de espera", "Se dejó esperando al cliente", "tiempos injustificados"
+    var holdMatch = t.match(/(\d{1,2})\s*min(?:utos)?\s*(?:de\s*)?espera/i)
+        || t.match(/espera\s*(?:de\s*)?(\d{1,2})\s*min(?:utos)?/i)
+        || t.match(/(\d{1,2}):(\d{2})\s*(?:min\s*)?(?:de\s*)?espera/i)
+        || t.match(/(\d{1,2})\s*min(?:utos)?\s+espera/i);
+    if (holdMatch) {
+        excessiveHold = 'si';
+        if (holdMatch[2] !== undefined) {
+            holdTimeMinutes = (parseInt(holdMatch[1], 10) || 0) + (parseInt(holdMatch[2], 10) || 0) / 60;
+        } else {
+            holdTimeMinutes = parseInt(holdMatch[1], 10) || 3;
+        }
+    }
+    if (excessiveHold === 'no' && (/se dej[oó]\s*esperando|tiempos?\s*injustificados?|dejaron esperando/i.test(t))) {
+        excessiveHold = 'si';
+        var minInText = t.match(/(\d{1,2})\s*min(?:utos)?/i);
+        holdTimeMinutes = minInText ? parseInt(minInText[1], 10) : 3;
+    }
+
+    // 4) Resto: quitar Motivo, duración de llamada y frases de tiempo de espera para que no lleguen a notas
     var rest = t
         .replace(/Motivo:\s*[^.\n]*\.?\s*/gi, '')
         .replace(/Llamada\s*:\s*\d{1,2}:\d{2}\s*/gi, '')
@@ -485,8 +514,15 @@ function parseXtronautError(text) {
         .replace(/\d{1,2}:\d{2}\s*llamada\.?\s*/gi, '')
         .replace(/\d{1,2}:\d{2}\s*llamada\s*/gi, '')
         .replace(/llamada\s+\d{1,2}:\d{2}\s*/gi, '')
+        .replace(/\d{1,2}\s*min(?:utos)?\s*(?:de\s*)?espera/gi, '')
+        .replace(/espera\s*(?:de\s*)?\d{1,2}\s*min(?:utos)?/gi, '')
+        .replace(/\d{1,2}:\d{2}\s*(?:min\s*)?(?:de\s*)?espera/gi, '')
+        .replace(/\d{1,2}\s*min(?:utos)?\s+espera/gi, '')
+        .replace(/se dej[oó]\s*esperando\s*(?:al cliente)?\.?\s*/gi, '')
+        .replace(/tiempos?\s*injustificados?\.?\s*/gi, '')
+        .replace(/dejaron esperando[^.]*\.?\s*/gi, '')
         .trim();
-    return { durationMinutes, cancellationReason, restText: rest };
+    return { durationMinutes, cancellationReason, excessiveHold, holdTimeMinutes, restText: rest };
 }
 
 function renderPreview() {
