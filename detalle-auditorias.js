@@ -337,9 +337,18 @@ function renderAudits(audits) {
             <div class="audit-header-info">
                 <div class="audit-date">📅 ${formatDate(audit.callDate)}</div>
                 <div class="audit-badges">
-                    ${getCriticalityBadge(audit.criticality)}
-                    ${getTnpsBadge(audit.tnps)}
-                    ${audit.bpo ? getBpoBadge(audit.bpo) : ''}
+                    <div class="audit-badge-group">
+                        <span class="audit-badge-category">Criticidad</span>
+                        ${getCriticalityBadge(audit.criticality)}
+                    </div>
+                    <div class="audit-badge-group">
+                        <span class="audit-badge-category">TNPS</span>
+                        ${getTnpsBadge(audit.tnps)}
+                    </div>
+                    <div class="audit-badge-group">
+                        <span class="audit-badge-category">BPO</span>
+                        ${audit.bpo ? getBpoBadge(audit.bpo) : '<span class="badge" style="background:#f3f4f6;color:#6b7280;">—</span>'}
+                    </div>
                 </div>
             </div>
             
