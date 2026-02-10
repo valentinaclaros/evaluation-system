@@ -354,6 +354,11 @@ function mapExcelErrorsToChecklist(restText, callType) {
         }
         if (!matched && line.length > 0) notesParts.push(line);
     }
+    // Si había texto en Xtronaut pero ningún error coincidió con la checklist, marcar "Otro" para no dejar el campo vacío
+    if (errors.length === 0 && cleaned.length > 0) {
+        if (isTarjeta) errors.push('TC: Otro');
+        else if (isAhorros || isMulti) errors.push('Otro');
+    }
     return { errors: errors, callNotes: notesParts.join(' ').trim() };
 }
 
