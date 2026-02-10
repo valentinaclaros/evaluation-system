@@ -296,9 +296,9 @@ function matchMotivoToChecklist(motivoRaw, callType) {
     return motivoRaw.substring(0, 300);
 }
 
-// Mapeo de frases del Excel (Xtronaut error) → valor de la checklist. callType para prefijo TC:
+// Mapeo de frases del Excel (Xtronaut error) → valor de la checklist. Intuitivo: errores a checklist, no a notas.
 var EXCEL_ERROR_TO_CHECKLIST = [
-    { pattern: /tiempos de cancelación no se mencionan|tiempos de cancelación incorrectos/i, ahorros: 'Se dan tiempos de cancelación incorrectos', credito: 'TC: Se dan tiempos de cancelación incorrectos' },
+    { pattern: /tiempos de cancelación no se mencionan|tiempos de cancelación incorrectos|no se dan tiempos de cancelación/i, ahorros: 'Se dan tiempos de cancelación incorrectos', credito: 'TC: Se dan tiempos de cancelación incorrectos' },
     { pattern: /no se validaron tags/i, ahorros: 'No se validaron Tags', credito: 'TC: No se validaron Tags' },
     { pattern: /no se revisó el estado del producto en la herramienta/i, ahorros: 'No se revisó el estado del producto en la herramienta', credito: 'TC: No se revisó el estado del producto en la herramienta' },
     { pattern: /no se realizó hf/i, ahorros: 'No se realizó HF', credito: 'TC: No se realizó HF' },
@@ -309,7 +309,7 @@ var EXCEL_ERROR_TO_CHECKLIST = [
     { pattern: /no se validó el producto \(saldo|no se validó el producto \(deuda/i, ahorros: 'No se validó el producto (saldo en cajita, saldos mayores a $0,99, préstamo activo, etc.)', credito: 'TC: No se validó el producto (deuda activa, saldo a favor, compras en proceso, complaints activos, etc.)' },
     { pattern: /no se solicitó aproximación de saldo/i, ahorros: 'No se solicitó aproximación de saldo', credito: null },
     { pattern: /no se leyeron condiciones de cancelación/i, ahorros: 'No se leyeron condiciones de cancelación', credito: 'TC: No se leyeron condiciones de cancelación' },
-    { pattern: /no se cancelaron las tarjetas/i, ahorros: 'No se cancelaron las tarjetas (físicas/virtuales)', credito: 'TC: No se cancelaron las tarjetas (físicas/virtuales)' },
+    { pattern: /no se cancelaron las tarjetas|no se cancela(n)?\s*(las?\s*)?tarjetas?(\s*virtual(es)?)?/i, ahorros: 'No se cancelaron las tarjetas (físicas/virtuales)', credito: 'TC: No se cancelaron las tarjetas (físicas/virtuales)' },
     { pattern: /no se escaló secondary job|no se escaló secundary job/i, ahorros: 'No se escaló Secundary Job', credito: 'TC: No se escaló Secundary Job' },
     { pattern: /no se confirmó la gestión realizada/i, ahorros: 'No se confirmó la gestión realizada', credito: 'TC: No se confirmó la gestión realizada' },
     { pattern: /no se promueve case management/i, ahorros: 'No se promueve case management', credito: 'TC: No se promueve case management' },
@@ -322,15 +322,23 @@ function mapExcelErrorsToChecklist(restText, callType) {
     var isTarjeta = callType === 'cancelacion_tarjeta_credito';
     var isAhorros = callType === 'cancelacion_cuenta_ahorros';
     var isMulti = callType === 'cancelacion_multiproducto';
-    var lines = String(restText || '').split(/\n|\.\s+|\?\s+/).map(function(s) { return s.trim(); }).filter(Boolean);
+    // Quitar cualquier resto de duración que haya quedado (ej. "llamada 30:24") para no llevarlo a notas
+    var cleaned = String(restText || '')
+        .replace(/\d{1,2}:\d{2}\s*llamada\.?\s*/gi, '')
+        .replace(/llamada\s+\d{1,2}:\d{2}\s*/gi, '')
+        .trim();
+    var lines = cleaned.split(/\n|\.\s+|\?\s+/).map(function(s) { return s.trim(); }).filter(Boolean);
     for (var i = 0; i < lines.length; i++) {
         var line = lines[i];
+        // No meter en notas líneas que solo son duración
+        if (/^\s*llamada\s*\d{1,2}:\d{2}\s*$/i.test(line) || /^\s*\d{1,2}:\d{2}\s*llamada\s*$/i.test(line)) continue;
         var isQuestion = /^\s*¿?por qué|^\s*¿?porque|^\s*¿/i.test(line) || (line.indexOf('?') >= 0 && line.length < 120);
         if (isQuestion || line.length > 200) {
             notesParts.push(line);
             continue;
         }
         var matched = false;
+        // Una misma línea puede contener varios errores (ej. "No se cancela tarjeta virtual No se dan tiempos de cancelación")
         for (var j = 0; j < EXCEL_ERROR_TO_CHECKLIST.length; j++) {
             var rule = EXCEL_ERROR_TO_CHECKLIST[j];
             if (rule.pattern.test(line)) {
@@ -338,7 +346,6 @@ function mapExcelErrorsToChecklist(restText, callType) {
                 if ((isAhorros || isMulti) && rule.ahorros && errors.indexOf(rule.ahorros) === -1) errors.push(rule.ahorros);
                 if ((isTarjeta || isMulti) && rule.credito && errors.indexOf(rule.credito) === -1) errors.push(rule.credito);
                 matched = true;
-                break;
             }
         }
         if (!matched && line.length > 0) notesParts.push(line);
@@ -448,7 +455,7 @@ function mapRowToAudit(raw) {
     };
 }
 
-// Extrae de Xtronaut error (Col F): Motivo: ..., Llamada: MM:SS o HH:MM llamada., resto = errores/notas
+// Extrae de Xtronaut error (Col F): Motivo, Llamada MM:SS (todas las variantes), resto = solo errores/notas (nunca la duración)
 function parseXtronautError(text) {
     var t = String(text || '').trim();
     var durationMinutes = 0;
@@ -460,19 +467,24 @@ function parseXtronautError(text) {
         cancellationReason = motivoMatch[1].trim().replace(/\.$/, '').substring(0, 300) || null;
     }
 
-    // 2) Duración: "Llamada: 00:00" o "11:27 llamada."
-    var timeMatch = t.match(/Llamada:\s*(\d{1,2}):(\d{2})/i) || t.match(/(\d{1,2}):(\d{2})\s*llamada\.?/i);
+    // 2) Duración: "Llamada: 3:16", "Llamada 3:16", "llamada 3:16", "3:16 llamada", "3:16 llamada."
+    var timeMatch = t.match(/Llamada\s*:\s*(\d{1,2}):(\d{2})/i)
+        || t.match(/Llamada\s+(\d{1,2}):(\d{2})/i)
+        || t.match(/(\d{1,2}):(\d{2})\s*llamada\.?\s*/i);
     if (timeMatch) {
         var minutes = parseInt(timeMatch[1], 10) || 0;
         var seconds = parseInt(timeMatch[2], 10) || 0;
         durationMinutes = minutes + seconds / 60;
     }
 
-    // 3) Resto: quitar Motivo y duración para mapear a errores checklist y notas
+    // 3) Resto: quitar Motivo y TODAS las variantes de duración para que no lleguen a notas
     var rest = t
         .replace(/Motivo:\s*[^.\n]*\.?\s*/gi, '')
-        .replace(/Llamada:\s*\d{1,2}:\d{2}\s*/gi, '')
+        .replace(/Llamada\s*:\s*\d{1,2}:\d{2}\s*/gi, '')
+        .replace(/Llamada\s+\d{1,2}:\d{2}\s*/gi, '')
         .replace(/\d{1,2}:\d{2}\s*llamada\.?\s*/gi, '')
+        .replace(/\d{1,2}:\d{2}\s*llamada\s*/gi, '')
+        .replace(/llamada\s+\d{1,2}:\d{2}\s*/gi, '')
         .trim();
     return { durationMinutes, cancellationReason, restText: rest };
 }
