@@ -556,26 +556,31 @@ function parseXtronautError(text) {
     if (/Errores\s*:\s*No|Errores:\s*No/i.test(t)) explicitNoErrors = true;
 
     // 0b) Preguntas con respuesta: detectar para llenar campos (antes de quitar del texto)
-    // ¿Tiempos de espera? No / Sí  o  Tiempos de espera: No
-    var tiemposPregunta = t.match(/(?:¿?)\s*Tiempos de espera\s*[?:\s]\s*(No|S[ií]|SÍ)(?:\s*(?:(\d{1,2})\s*min(?:utos)?|\d{1,2}:\d{2}))?/i);
-    if (tiemposPregunta) {
+    // ¿Tiempos de espera? No / Sí  O  ¿Tiempos de espera?: 3 minutos (número = SÍ con ese tiempo)
+    var tiemposPregunta = t.match(/(?:¿?)\s*Tiempos de espera\s*\??\s*:?\s*(No|S[ií]|SÍ)(?:\s*(?:(\d{1,2})\s*min(?:utos)?|\d{1,2}:\d{2}))?/i);
+    var tiemposConNumero = t.match(/(?:¿?)\s*Tiempos de espera\s*\??\s*:?\s*(\d{1,2})\s*min(?:utos)?/i);
+    if (tiemposConNumero) {
+        excessiveHold = 'si';
+        holdTimeMinutes = parseInt(tiemposConNumero[1], 10) || 3;
+    } else if (tiemposPregunta) {
         if (/^No$/i.test(tiemposPregunta[1].trim())) { excessiveHold = 'no'; holdTimeMinutes = 0; }
         else { excessiveHold = 'si'; holdTimeMinutes = tiemposPregunta[2] ? parseInt(tiemposPregunta[2], 10) : 3; }
     }
-    // ¿Se intentó transferir la llamada? No / Sí  o  Se intentó transferir: No
-    var transferPregunta = t.match(/(?:¿?)\s*Se\s+intent[oó]\s+transferir\s*(?:la\s*llamada)?\s*[?:\s]\s*(No|S[ií]|SÍ)/i)
-        || t.match(/Intent[oó]\s+transferir\s*(?:la\s*llamada)?\s*[?:\s]\s*(No|S[ií]|SÍ)/i);
+    // ¿Se intentó transferir (la )llamada? No / Sí  (aceptar "llamada" sin "la")
+    var transferPregunta = t.match(/(?:¿?)\s*Se\s+intent[oó]\s+transferir\s*(?:la\s*)?llamada\s*\??\s*:?\s*(No|S[ií]|SÍ)/i)
+        || t.match(/Intent[oó]\s+transferir\s*(?:la\s*)?llamada\s*\??\s*:?\s*(No|S[ií]|SÍ)/i);
     if (transferPregunta) {
         transferAttempt = /^S[iíÍ]$/i.test(transferPregunta[1].trim()) ? 'si' : 'no';
     }
-    // Si no había pregunta explícita: "Agente intentó transferir" (afirmación) → Sí
-    if (!transferPregunta && /agente\s+intent[oó]\s+transferir|intent[oó]\s+transferir\s*(la\s*llamada)?(?!\s*\?)|intento\s+de\s+transferir/i.test(t)) {
+    // Solo si NO hubo pregunta explícita: "Agente intentó transferir" (afirmación) → Sí
+    if (!transferPregunta && /agente\s+intent[oó]\s+transferir|intent[oó]\s+transferir\s*(la\s*)?llamada?(?!\s*\??)/i.test(t)) {
         transferAttempt = 'si';
     }
 
-    // Quitar preguntas con respuesta del texto para que NUNCA lleguen a notas
-    t = t.replace(/¿?\s*Tiempos\s+de\s+espera\s*\?\s*(No|S[ií]|SÍ)(?:\s*\d{1,2}\s*min(?:utos)?)?\s*/gi, ' ');
-    t = t.replace(/¿?\s*Se\s+intent[oó]\s+transferir\s*(?:la\s*llamada)?\s*\?\s*(No|S[ií]|SÍ)\s*/gi, ' ');
+    // Quitar SIEMPRE preguntas con respuesta del texto para que NUNCA lleguen a notas
+    t = t.replace(/(?:¿?)\s*Tiempos\s+de\s+espera\s*\??\s*:?\s*(?:No|S[ií]|SÍ|\d{1,2}\s*min(?:utos)?)(?:\s*\d{1,2}\s*min(?:utos)?)?\s*/gi, ' ');
+    t = t.replace(/(?:¿?)\s*Se\s+intent[oó]\s+transferir\s*(?:la\s*)?llamada\s*\??\s*:?\s*(?:No|S[ií]|SÍ)\s*/gi, ' ');
+    t = t.replace(/Intent[oó]\s+transferir\s*(?:la\s*)?llamada\s*\??\s*:?\s*(?:No|S[ií]|SÍ)\s*/gi, ' ');
 
     // 1) Motivo: "Motivo: No la usa." o "Motivo: Quería crédito."
     var motivoMatch = t.match(/Motivo:\s*([^.\n]*\.?)/i);
