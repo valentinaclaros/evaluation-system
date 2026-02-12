@@ -342,7 +342,7 @@ function mapExcelErrorsToChecklist(restText, callType) {
     var isTarjeta = callType === 'cancelacion_tarjeta_credito';
     var isAhorros = callType === 'cancelacion_cuenta_ahorros';
     var isMulti = callType === 'cancelacion_multiproducto';
-    // Quitar duración de llamada y tiempos de espera que no deben ir a notas
+    // Quitar duración, tiempos de espera y preguntas (no van a notas)
     var cleaned = String(restText || '')
         .replace(/\d{1,2}:\d{2}\s*llamada\.?\s*/gi, '')
         .replace(/llamada\s+\d{1,2}:\d{2}\s*/gi, '')
@@ -350,6 +350,9 @@ function mapExcelErrorsToChecklist(restText, callType) {
         .replace(/espera\s*(?:de\s*)?\d{1,2}\s*min(?:utos)?/gi, '')
         .replace(/se dej[oó]\s*esperando[^.]*\.?\s*/gi, '')
         .replace(/tiempos?\s*injustificados?\.?\s*/gi, '')
+        .replace(/Errores\s*:\s*No\.?\s*/gi, '')
+        .replace(/(?:¿?)\s*Tiempos de espera\s*[?:\s]\s*(?:No|S[ií]|SÍ)[^.\n]*\.?\s*/gi, '')
+        .replace(/(?:¿?)\s*Se\s+intent[oó]\s+transferir[^.\n]*?(?:No|S[ií]|SÍ)\.?\s*/gi, '')
         .trim();
     var lines = cleaned.split(/\n|\.\s+|\?\s+/).map(function(s) { return s.trim(); }).filter(Boolean);
     for (var i = 0; i < lines.length; i++) {
@@ -476,8 +479,11 @@ function mapRowToAudit(raw) {
         var mapped = mapExcelErrorsToChecklist(parsed.restText || '', callType);
         errors = mapped.errors;
         callNotes = mapped.callNotes || '';
-        // Si criticidad es Perfecto no se asignan errores ni "Otro"
-        if (criticality !== 'perfecto') {
+        // "Errores: No" en Xtronaut → no hay errores, no agregar Otro
+        if (parsed.explicitNoErrors) {
+            errors = [];
+            errorDescription = '';
+        } else if (criticality !== 'perfecto') {
             if (errors.length === 0) {
                 if (callType === 'cancelacion_tarjeta_credito') errors = ['TC: Otro'];
                 else if (callType === 'cancelacion_cuenta_ahorros') errors = ['Otro'];
@@ -516,7 +522,7 @@ function mapRowToAudit(raw) {
     };
 }
 
-// Extrae de Xtronaut error (Col F): Motivo, Llamada MM:SS, tiempos de espera > 2 min, resto = errores/notas
+// Extrae de Xtronaut error (Col F): Motivo, Llamada MM:SS, preguntas (tiempos de espera, transferir), Errores: No, resto = errores/notas
 function parseXtronautError(text) {
     var t = String(text || '').trim();
     var durationMinutes = 0;
@@ -524,9 +530,26 @@ function parseXtronautError(text) {
     var excessiveHold = 'no';
     var holdTimeMinutes = 0;
     var transferAttempt = 'no';
+    var explicitNoErrors = false;
 
-    // 0) ¿Agente intentó transferir? "Agente intentó transferir", "intentó transferir", etc. → Sí; si no dice nada → No
-    if (/agente\s+intent[oó]\s+transferir|intent[oó]\s+transferir\s*(la\s*llamada)?|intento\s+de\s+transferir/i.test(t)) {
+    // 0) "Errores: No" → no hay errores, no se debe agregar Otro
+    if (/Errores\s*:\s*No|Errores:\s*No/i.test(t)) explicitNoErrors = true;
+
+    // 0b) Preguntas con respuesta (NO van a notas; responden a los campos)
+    // ¿Tiempos de espera? No / Sí  o  Tiempos de espera: No
+    var tiemposPregunta = t.match(/(?:¿?)\s*Tiempos de espera\s*[?:\s]\s*(No|S[ií]|SÍ)(?:\s*(?:(\d{1,2})\s*min(?:utos)?|\d{1,2}:\d{2}))?/i);
+    if (tiemposPregunta) {
+        if (/^No$/i.test(tiemposPregunta[1].trim())) { excessiveHold = 'no'; holdTimeMinutes = 0; }
+        else { excessiveHold = 'si'; holdTimeMinutes = tiemposPregunta[2] ? parseInt(tiemposPregunta[2], 10) : 3; }
+    }
+    // ¿Se intentó transferir la llamada? No / Sí  o  Se intentó transferir: No
+    var transferPregunta = t.match(/(?:¿?)\s*Se\s+intent[oó]\s+transferir\s*(?:la\s*llamada)?\s*[?:\s]\s*(No|S[ií]|SÍ)/i)
+        || t.match(/Intent[oó]\s+transferir\s*(?:la\s*llamada)?\s*[?:\s]\s*(No|S[ií]|SÍ)/i);
+    if (transferPregunta) {
+        transferAttempt = /^S[iíÍ]$/i.test(transferPregunta[1].trim()) ? 'si' : 'no';
+    }
+    // Si no había pregunta explícita: "Agente intentó transferir" (afirmación) → Sí
+    if (!transferPregunta && /agente\s+intent[oó]\s+transferir|intent[oó]\s+transferir\s*(la\s*llamada)?(?!\s*\?)|intento\s+de\s+transferir/i.test(t)) {
         transferAttempt = 'si';
     }
 
@@ -583,8 +606,12 @@ function parseXtronautError(text) {
         .replace(/agente\s+intent[oó]\s+transferir[^.]*\.?\s*/gi, '')
         .replace(/intent[oó]\s+transferir\s*(la\s*llamada)?[^.]*\.?\s*/gi, '')
         .replace(/intento\s+de\s+transferir[^.]*\.?\s*/gi, '')
+        .replace(/Errores\s*:\s*No\.?\s*/gi, '')
+        .replace(/(?:¿?)\s*Tiempos de espera\s*[?:\s]\s*(?:No|S[ií]|SÍ)(?:\s*\d{1,2}\s*min(?:utos)?)?\.?\s*/gi, '')
+        .replace(/(?:¿?)\s*Se\s+intent[oó]\s+transferir\s*(?:la\s*llamada)?\s*[?:\s]\s*(?:No|S[ií]|SÍ)\.?\s*/gi, '')
+        .replace(/Intent[oó]\s+transferir\s*(?:la\s*llamada)?\s*[?:\s]\s*(?:No|S[ií]|SÍ)\.?\s*/gi, '')
         .trim();
-    return { durationMinutes, cancellationReason, excessiveHold, holdTimeMinutes, transferAttempt, restText: rest };
+    return { durationMinutes, cancellationReason, excessiveHold, holdTimeMinutes, transferAttempt, explicitNoErrors, restText: rest };
 }
 
 function renderPreview() {
