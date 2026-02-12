@@ -333,34 +333,39 @@ async function checkEditMode() {
             if (audit.cancellationReason) {
                 const applyMotivo = () => {
                     if (audit.callType === 'cancelacion_multiproducto' && audit.cancellationReason.includes('|')) {
-                        const parts = audit.cancellationReason.split('|');
-                        const ahorrosMotivo = (parts[0] || '').replace(/Ahorros:\s*/i, '').trim();
-                        const creditoMotivo = (parts[1] || '').replace(/Crédito:\s*/i, '').trim();
+                        const parts = audit.cancellationReason.split('|').map(p => (p || '').trim());
+                        const ahorrosMotivo = (parts[0] || '').replace(/^Ahorros\s*:\s*/i, '').trim();
+                        const creditoMotivo = (parts[1] || '').replace(/^Cr[eé]dito\s*:\s*/i, '').trim();
                         const multiAhorros = document.getElementById('multiproductoAhorrosReason');
                         const multiCredito = document.getElementById('multiproductoCreditoReason');
-                        if (multiAhorros) multiAhorros.value = ahorrosMotivo;
-                        if (multiCredito) multiCredito.value = creditoMotivo;
-                        if (multiAhorros && !multiAhorros.value && ahorrosMotivo) {
-                            multiAhorros.appendChild(new Option(ahorrosMotivo, ahorrosMotivo));
+                        if (multiAhorros && ahorrosMotivo) {
                             multiAhorros.value = ahorrosMotivo;
+                            if (multiAhorros.value !== ahorrosMotivo) {
+                                multiAhorros.appendChild(new Option(ahorrosMotivo, ahorrosMotivo));
+                                multiAhorros.value = ahorrosMotivo;
+                            }
                         }
-                        if (multiCredito && !multiCredito.value && creditoMotivo) {
-                            multiCredito.appendChild(new Option(creditoMotivo, creditoMotivo));
+                        if (multiCredito && creditoMotivo) {
                             multiCredito.value = creditoMotivo;
+                            if (multiCredito.value !== creditoMotivo) {
+                                multiCredito.appendChild(new Option(creditoMotivo, creditoMotivo));
+                                multiCredito.value = creditoMotivo;
+                            }
                         }
                     } else {
                         const reasonSelect = document.getElementById('cancellationReason');
-                        if (reasonSelect) {
+                        if (reasonSelect && audit.cancellationReason) {
                             reasonSelect.value = audit.cancellationReason;
-                            if (!reasonSelect.value && audit.cancellationReason) {
+                            if (reasonSelect.value !== audit.cancellationReason) {
                                 reasonSelect.appendChild(new Option(audit.cancellationReason, audit.cancellationReason));
                                 reasonSelect.value = audit.cancellationReason;
                             }
                         }
                     }
                 };
-                setTimeout(applyMotivo, 50);
-                setTimeout(applyMotivo, 250);
+                setTimeout(applyMotivo, 80);
+                setTimeout(applyMotivo, 350);
+                setTimeout(applyMotivo, 600);
             }
             
             // Cargar nuevos campos operativos
@@ -375,16 +380,15 @@ async function checkEditMode() {
             // Activar la sección de errores correspondiente (mostrar la correcta)
             updateErrorsSection(audit.callType, audit.criticality);
             
-            // Esperar a que se rendericen los checkboxes y marcar los errores
-            setTimeout(() => {
-                if (audit.errors && Array.isArray(audit.errors)) {
-                    audit.errors.forEach(error => {
-                        const escaped = String(error).replace(/"/g, '\\"');
-                        const checkbox = document.querySelector(`input[name="error"][value="${escaped}"]`);
-                        if (checkbox) checkbox.checked = true;
-                    });
-                }
-            }, 200);
+            // Marcar los errores guardados (robusto: comparar valor con cada checkbox)
+            const errorsArray = Array.isArray(audit.errors) ? audit.errors.map(e => String(e).trim()) : [];
+            const applyErrors = () => {
+                document.querySelectorAll('input[name="error"]').forEach(cb => {
+                    cb.checked = errorsArray.indexOf(cb.value) !== -1;
+                });
+            };
+            setTimeout(applyErrors, 100);
+            setTimeout(applyErrors, 400);
             
             // Guardar el ID en localStorage por si no estaba
             localStorage.setItem('editingAuditId', auditId);

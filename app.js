@@ -90,7 +90,14 @@ async function getAudits() {
         
         if (error) throw error;
         
-        // Convertir snake_case a camelCase para compatibilidad
+        // Convertir snake_case a camelCase; asegurar que errors sea siempre array
+        function normalizeErrors(err) {
+            if (Array.isArray(err)) return err;
+            if (typeof err === 'string' && err) {
+                try { return JSON.parse(err); } catch (e) { return err.split(';').map(s => s.trim()).filter(Boolean); }
+            }
+            return [];
+        }
         return (data || []).map(audit => ({
             id: audit.id,
             callDate: audit.call_date,
@@ -105,7 +112,7 @@ async function getAudits() {
             criticality: audit.criticality,
             tnps: audit.tnps,
             errorDescription: audit.error_description,
-            errors: audit.errors,
+            errors: normalizeErrors(audit.errors),
             callNotes: audit.call_notes,
             callDuration: audit.call_duration,
             transferAttempt: audit.transfer_attempt,
