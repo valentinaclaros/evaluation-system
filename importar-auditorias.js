@@ -296,38 +296,58 @@ function matchMotivoToChecklist(motivoRaw, callType) {
     return motivoRaw.substring(0, 300);
 }
 
-// Mapeo de frases del Excel (Xtronaut error) → checklist. Flexible: distintas formas verbales, redacción y typos.
+// Mapeo INTUITIVO: muchas variantes por error (no literal). Cualquier forma de decirlo → checklist.
 var EXCEL_ERROR_TO_CHECKLIST = [
-    { pattern: /tiempos?\s*(de\s*)?cancelaci[oó]n|no se dan tiempos|tiempos incorrectos|no se mencionan tiempos/i, ahorros: 'Se dan tiempos de cancelación incorrectos', credito: 'TC: Se dan tiempos de cancelación incorrectos' },
-    { pattern: /validar(on)?\s*tags?|tags?\s*(no\s*)?validad[oa]s?/i, ahorros: 'No se validaron Tags', credito: 'TC: No se validaron Tags' },
-    { pattern: /revis[oó]\s*estado del producto|estado del producto en la herramienta|revis[oa]r\s*producto.*herramienta/i, ahorros: 'No se revisó el estado del producto en la herramienta', credito: 'TC: No se revisó el estado del producto en la herramienta' },
-    { pattern: /realiz[oó]\s*hf|no\s*hf\s*|hf\s*no\s*realiz/i, ahorros: 'No se realizó HF', credito: 'TC: No se realizó HF' },
-    { pattern: /indag[oó].*motivo|motivo de cancelaci[oó]n.*indag|no indag.*motivo/i, ahorros: 'No se indagó en el motivo de cancelación', credito: 'TC: No se indagó en el motivo de cancelación' },
-    { pattern: /leyeron?\s*beneficios|beneficios.*no\s*le(y|í)/i, ahorros: 'No se leyeron beneficios', credito: 'TC: No se leyeron beneficios' },
-    { pattern: /cdt\s*activo|cliente tiene cdt|validar.*cdt/i, ahorros: 'No se validó si el cliente tiene CDT activo', credito: null },
-    { pattern: /retenci[oó]n|no\s*hizo retenci[oó]n|hizo\s*retenci/i, ahorros: 'No se hizo retención', credito: 'TC: No se hizo retención' },
-    { pattern: /valid[oó].*producto.*saldo|validar producto.*deuda|producto.*saldo en cajita|deuda activa.*saldo/i, ahorros: 'No se validó el producto (saldo en cajita, saldos mayores a $0,99, préstamo activo, etc.)', credito: 'TC: No se validó el producto (deuda activa, saldo a favor, compras en proceso, complaints activos, etc.)' },
-    { pattern: /aproximaci[oó]n de saldo|solicit[oó].*saldo|saldo.*aproximaci/i, ahorros: 'No se solicitó aproximación de saldo', credito: null },
-    { pattern: /condiciones de cancelaci[oó]n|leyeron?\s*condiciones|leer condiciones/i, ahorros: 'No se leyeron condiciones de cancelación', credito: 'TC: No se leyeron condiciones de cancelación' },
-    { pattern: /tarjeta(s)?\s*(virtual(es)?|físicas?)?.*cancel|cancel(ar|aron|ó|a).*tarjeta(s)?\s*(virtual(es)?)?|no\s*(se\s*)?cancel[oóa].*tarjeta|tarjeta\s*virtual/i, ahorros: 'No se cancelaron las tarjetas (físicas/virtuales)', credito: 'TC: No se cancelaron las tarjetas (físicas/virtuales)' },
-    { pattern: /escal[oó].*secondary|secondary\s*job|secundary\s*job|no\s*escal.*job/i, ahorros: 'No se escaló Secundary Job', credito: 'TC: No se escaló Secundary Job' },
-    { pattern: /gesti[oó]n realizada|confirm[oó].*gesti|gestión.*confirm/i, ahorros: 'No se confirmó la gestión realizada', credito: 'TC: No se confirmó la gestión realizada' },
-    { pattern: /case\s*management|promueve.*case|promovi[oó].*case/i, ahorros: 'No se promueve case management', credito: 'TC: No se promueve case management' },
-    { pattern: /promueve\s*encuesta|promovi[oó].*encuesta|encuesta.*no\s*promueve/i, ahorros: 'No se promueve encuesta', credito: 'TC: No se promueve encuesta' },
-    { pattern: /tipo de tarjeta de cr[eé]dito|valid[oó].*tipo.*tarjeta|tarjeta.*cr[eé]dito.*tipo/i, ahorros: null, credito: 'TC: No se validó el tipo de tarjeta de crédito que tenía el cliente' }
+    { pattern: /tiempos?\s*(de\s*)?cancelaci[oó]n|plazos|no\s*(se\s*)?(dan|mencionan|dijeron)\s*tiempos|tiempos\s*incorrectos|no\s*mencion[oó]\s*tiempos|tiempos\s*no\s*mencionados/i, ahorros: 'Se dan tiempos de cancelación incorrectos', credito: 'TC: Se dan tiempos de cancelación incorrectos' },
+    { pattern: /tags?\s*(no\s*)?(valid|revis|verific)|(no\s*)?valid[oó].*tags?|tags?\s*validad[oa]s?|revis[oó].*tags?/i, ahorros: 'No se validaron Tags', credito: 'TC: No se validaron Tags' },
+    { pattern: /estado\s*del\s*producto|producto\s*en\s*la\s*herramienta|revis[oóar].*producto.*herramienta|herramienta.*producto|(no\s*)?revis[oó].*estado|validar\s*estado\s*producto/i, ahorros: 'No se revisó el estado del producto en la herramienta', credito: 'TC: No se revisó el estado del producto en la herramienta' },
+    { pattern: /hf|fecha\s*(?:de\s*)?nacimiento|(no\s*)?(pregunt[oó]|realiz[oó]|hizo|solicit[oó]).*(?:hf|fecha|nacimiento)|agente\s*no\s*pregunt|no\s*pregunt[oó].*nacimiento|verificaci[oó]n\s*de\s*identidad|el\s*agente\s*no\s*pregunt/i, ahorros: 'No se realizó HF', credito: 'TC: No se realizó HF' },
+    { pattern: /motivo\s*(de\s*)?cancelaci[oó]n|indag[oóar].*motivo|(no\s*)?(pregunt[oó]|indag[oó]).*motivo|motivo.*no\s*(pregunt|indag)|por\s*qu[eé]\s*cancela|raz[oó]n\s*cancelaci[oó]n/i, ahorros: 'No se indagó en el motivo de cancelación', credito: 'TC: No se indagó en el motivo de cancelación' },
+    { pattern: /beneficios|(no\s*)?(ley[oó]|leer|mencion[oó]).*beneficios|beneficios.*no\s*(ley|mencion)|leyeron\s*beneficios/i, ahorros: 'No se leyeron beneficios', credito: 'TC: No se leyeron beneficios' },
+    { pattern: /cdt\s*activo|cliente\s*tiene\s*cdt|validar.*cdt|(no\s*)?valid[oó].*cdt|cdt\s*del\s*cliente/i, ahorros: 'No se validó si el cliente tiene CDT activo', credito: null },
+    { pattern: /retenci[oó]n|(no\s*)?(hizo|realiz[oó])\s*retenci|retuvo|intent[oó].*retener|no\s*retuvo|oferta\s*retenci[oó]n/i, ahorros: 'No se hizo retención', credito: 'TC: No se hizo retención' },
+    { pattern: /validar\s*producto|producto.*(saldo|deuda|cajita|pr[eé]stamo)|saldo\s*en\s*cajita|deuda\s*activa|compras\s*en\s*proceso|(no\s*)?valid[oó].*producto/i, ahorros: 'No se validó el producto (saldo en cajita, saldos mayores a $0,99, préstamo activo, etc.)', credito: 'TC: No se validó el producto (deuda activa, saldo a favor, compras en proceso, complaints activos, etc.)' },
+    { pattern: /aproximaci[oó]n\s*saldo|(no\s*)?solicit[oó].*saldo|saldo.*aproximaci|pregunt[oó].*saldo\s*aproximado/i, ahorros: 'No se solicitó aproximación de saldo', credito: null },
+    { pattern: /condiciones\s*(de\s*)?cancelaci[oó]n|(no\s*)?(ley[oó]|leer).*condiciones|condiciones.*no\s*ley|plazos\s*cancelaci[oó]n|leyeron\s*condiciones/i, ahorros: 'No se leyeron condiciones de cancelación', credito: 'TC: No se leyeron condiciones de cancelación' },
+    { pattern: /tarjeta(s)?\s*(virtual(es)?|físicas?)?|cancelar.*tarjeta|(no\s*)?(cancel[oó]|cancelaron).*tarjeta|tarjeta.*(no\s*)?cancel|no\s*cancel[oóa].*tarjeta|plasticos?\s*cancel/i, ahorros: 'No se cancelaron las tarjetas (físicas/virtuales)', credito: 'TC: No se cancelaron las tarjetas (físicas/virtuales)' },
+    { pattern: /secondary\s*job|secundary\s*job|(no\s*)?escal[oó].*job|escalar.*secondary|sj\s*no\s*escal|job\s*secundar/i, ahorros: 'No se escaló Secundary Job', credito: 'TC: No se escaló Secundary Job' },
+    { pattern: /gesti[oó]n\s*realizada|(no\s*)?confirm[oó].*gesti|confirmar\s*gesti[oó]n|resumen\s*gesti[oó]n|cierre\s*de\s*gesti[oó]n/i, ahorros: 'No se confirmó la gestión realizada', credito: 'TC: No se confirmó la gestión realizada' },
+    { pattern: /case\s*management|(no\s*)?promueve.*case|promovi[oó].*case|case\s*management.*no|gestionar\s*caso|no\s*promueve\s*case|-?no\s*promueve\s*case/i, ahorros: 'No se promueve case management', credito: 'TC: No se promueve case management' },
+    { pattern: /encuesta|(no\s*)?promueve.*encuesta|promovi[oó].*encuesta|encuesta.*no\s*promueve|invit[oó].*encuesta|no\s*invit[oó].*encuesta/i, ahorros: 'No se promueve encuesta', credito: 'TC: No se promueve encuesta' },
+    { pattern: /tipo\s*de\s*tarjeta|tarjeta\s*de\s*cr[eé]dito.*tipo|(no\s*)?valid[oó].*tipo.*tarjeta|qu[eé]\s*tarjeta\s*ten[ií]a|clase\s*de\s*tarjeta/i, ahorros: null, credito: 'TC: No se validó el tipo de tarjeta de crédito que tenía el cliente' }
 ];
-// Interpretación flexible por palabras clave: si la línea suena al error aunque no coincida exactamente
+// Palabras clave: si la línea contiene TODAS estas palabras (en cualquier orden) → error. Intuitivo, no literal.
 var FLEXIBLE_KEYWORDS = [
-    { keywords: ['tarjeta', 'virtual', 'cancel'], ahorros: 'No se cancelaron las tarjetas (físicas/virtuales)', credito: 'TC: No se cancelaron las tarjetas (físicas/virtuales)' },
+    { keywords: ['tarjeta', 'virtual'], ahorros: 'No se cancelaron las tarjetas (físicas/virtuales)', credito: 'TC: No se cancelaron las tarjetas (físicas/virtuales)' },
     { keywords: ['tarjeta', 'cancel'], ahorros: 'No se cancelaron las tarjetas (físicas/virtuales)', credito: 'TC: No se cancelaron las tarjetas (físicas/virtuales)' },
     { keywords: ['tiempo', 'cancelación'], ahorros: 'Se dan tiempos de cancelación incorrectos', credito: 'TC: Se dan tiempos de cancelación incorrectos' },
-    { keywords: ['tags', 'valid'], ahorros: 'No se validaron Tags', credito: 'TC: No se validaron Tags' },
-    { keywords: ['beneficios', 'leer'], ahorros: 'No se leyeron beneficios', credito: 'TC: No se leyeron beneficios' },
-    { keywords: ['case', 'management'], ahorros: 'No se promueve case management', credito: 'TC: No se promueve case management' },
-    { keywords: ['encuesta', 'promueve'], ahorros: 'No se promueve encuesta', credito: 'TC: No se promueve encuesta' },
-    { keywords: ['retención', 'hizo'], ahorros: 'No se hizo retención', credito: 'TC: No se hizo retención' },
+    { keywords: ['tiempos', 'mencion'], ahorros: 'Se dan tiempos de cancelación incorrectos', credito: 'TC: Se dan tiempos de cancelación incorrectos' },
+    { keywords: ['tags'], ahorros: 'No se validaron Tags', credito: 'TC: No se validaron Tags' },
+    { keywords: ['tag', 'valid'], ahorros: 'No se validaron Tags', credito: 'TC: No se validaron Tags' },
+    { keywords: ['estado', 'producto'], ahorros: 'No se revisó el estado del producto en la herramienta', credito: 'TC: No se revisó el estado del producto en la herramienta' },
+    { keywords: ['herramienta', 'producto'], ahorros: 'No se revisó el estado del producto en la herramienta', credito: 'TC: No se revisó el estado del producto en la herramienta' },
+    { keywords: ['hf'], ahorros: 'No se realizó HF', credito: 'TC: No se realizó HF' },
+    { keywords: ['fecha', 'nacimiento'], ahorros: 'No se realizó HF', credito: 'TC: No se realizó HF' },
+    { keywords: ['nacimiento'], ahorros: 'No se realizó HF', credito: 'TC: No se realizó HF' },
+    { keywords: ['pregunt', 'nacimiento'], ahorros: 'No se realizó HF', credito: 'TC: No se realizó HF' },
+    { keywords: ['motivo', 'cancelación'], ahorros: 'No se indagó en el motivo de cancelación', credito: 'TC: No se indagó en el motivo de cancelación' },
+    { keywords: ['indag', 'motivo'], ahorros: 'No se indagó en el motivo de cancelación', credito: 'TC: No se indagó en el motivo de cancelación' },
+    { keywords: ['beneficios'], ahorros: 'No se leyeron beneficios', credito: 'TC: No se leyeron beneficios' },
+    { keywords: ['beneficio', 'leer'], ahorros: 'No se leyeron beneficios', credito: 'TC: No se leyeron beneficios' },
+    { keywords: ['cdt'], ahorros: 'No se validó si el cliente tiene CDT activo', credito: null },
+    { keywords: ['retención'], ahorros: 'No se hizo retención', credito: 'TC: No se hizo retención' },
+    { keywords: ['retener'], ahorros: 'No se hizo retención', credito: 'TC: No se hizo retención' },
+    { keywords: ['saldo', 'cajita'], ahorros: 'No se validó el producto (saldo en cajita, saldos mayores a $0,99, préstamo activo, etc.)', credito: 'TC: No se validó el producto (deuda activa, saldo a favor, compras en proceso, complaints activos, etc.)' },
+    { keywords: ['aproximación', 'saldo'], ahorros: 'No se solicitó aproximación de saldo', credito: null },
+    { keywords: ['condiciones', 'cancelación'], ahorros: 'No se leyeron condiciones de cancelación', credito: 'TC: No se leyeron condiciones de cancelación' },
     { keywords: ['secondary', 'job'], ahorros: 'No se escaló Secundary Job', credito: 'TC: No se escaló Secundary Job' },
-    { keywords: ['gestión', 'confirm'], ahorros: 'No se confirmó la gestión realizada', credito: 'TC: No se confirmó la gestión realizada' }
+    { keywords: ['secundary'], ahorros: 'No se escaló Secundary Job', credito: 'TC: No se escaló Secundary Job' },
+    { keywords: ['gestión', 'confirm'], ahorros: 'No se confirmó la gestión realizada', credito: 'TC: No se confirmó la gestión realizada' },
+    { keywords: ['case', 'management'], ahorros: 'No se promueve case management', credito: 'TC: No se promueve case management' },
+    { keywords: ['promueve', 'case'], ahorros: 'No se promueve case management', credito: 'TC: No se promueve case management' },
+    { keywords: ['encuesta'], ahorros: 'No se promueve encuesta', credito: 'TC: No se promueve encuesta' },
+    { keywords: ['encuesta', 'promueve'], ahorros: 'No se promueve encuesta', credito: 'TC: No se promueve encuesta' },
+    { keywords: ['tipo', 'tarjeta', 'crédito'], ahorros: null, credito: 'TC: No se validó el tipo de tarjeta de crédito que tenía el cliente' }
 ];
 function lineMatchesKeywords(line, keywordList) {
     var lower = line.toLowerCase().normalize('NFD').replace(/\u0300/g, '');
@@ -351,8 +371,8 @@ function mapExcelErrorsToChecklist(restText, callType) {
         .replace(/se dej[oó]\s*esperando[^.]*\.?\s*/gi, '')
         .replace(/tiempos?\s*injustificados?\.?\s*/gi, '')
         .replace(/Errores\s*:\s*No\.?\s*/gi, '')
-        .replace(/(?:¿?)\s*Tiempos de espera\s*[?:\s]\s*(?:No|S[ií]|SÍ)[^.\n]*\.?\s*/gi, '')
-        .replace(/(?:¿?)\s*Se\s+intent[oó]\s+transferir[^.\n]*?(?:No|S[ií]|SÍ)\.?\s*/gi, '')
+        .replace(/¿?\s*Tiempos\s+de\s+espera\s*\?\s*(?:No|S[ií]|SÍ)\s*/gi, ' ')
+        .replace(/¿?\s*Se\s+intent[oó]\s+transferir\s*(?:la\s*llamada)?\s*\?\s*(?:No|S[ií]|SÍ)\s*/gi, ' ')
         .trim();
     var lines = cleaned.split(/\n|\.\s+|\?\s+/).map(function(s) { return s.trim(); }).filter(Boolean);
     for (var i = 0; i < lines.length; i++) {
@@ -535,7 +555,7 @@ function parseXtronautError(text) {
     // 0) "Errores: No" → no hay errores, no se debe agregar Otro
     if (/Errores\s*:\s*No|Errores:\s*No/i.test(t)) explicitNoErrors = true;
 
-    // 0b) Preguntas con respuesta (NO van a notas; responden a los campos)
+    // 0b) Preguntas con respuesta: detectar para llenar campos (antes de quitar del texto)
     // ¿Tiempos de espera? No / Sí  o  Tiempos de espera: No
     var tiemposPregunta = t.match(/(?:¿?)\s*Tiempos de espera\s*[?:\s]\s*(No|S[ií]|SÍ)(?:\s*(?:(\d{1,2})\s*min(?:utos)?|\d{1,2}:\d{2}))?/i);
     if (tiemposPregunta) {
@@ -552,6 +572,10 @@ function parseXtronautError(text) {
     if (!transferPregunta && /agente\s+intent[oó]\s+transferir|intent[oó]\s+transferir\s*(la\s*llamada)?(?!\s*\?)|intento\s+de\s+transferir/i.test(t)) {
         transferAttempt = 'si';
     }
+
+    // Quitar preguntas con respuesta del texto para que NUNCA lleguen a notas
+    t = t.replace(/¿?\s*Tiempos\s+de\s+espera\s*\?\s*(No|S[ií]|SÍ)(?:\s*\d{1,2}\s*min(?:utos)?)?\s*/gi, ' ');
+    t = t.replace(/¿?\s*Se\s+intent[oó]\s+transferir\s*(?:la\s*llamada)?\s*\?\s*(No|S[ií]|SÍ)\s*/gi, ' ');
 
     // 1) Motivo: "Motivo: No la usa." o "Motivo: Quería crédito."
     var motivoMatch = t.match(/Motivo:\s*([^.\n]*\.?)/i);
