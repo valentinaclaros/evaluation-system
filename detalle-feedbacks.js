@@ -42,17 +42,42 @@ function toggleFeedbackSelection(feedbackId, checkbox) {
     updateBulkActionsBar();
 }
 
-// Seleccionar todo
+// Seleccionar todo: si hay un agente expandido, solo sus feedbacks; si no hay ninguno abierto, todos
 function selectAll() {
+    const expandedSections = document.querySelectorAll('.agent-feedbacks.expanded');
+    if (expandedSections.length === 0) {
+        selectedFeedbacks = [];
+        document.querySelectorAll('.feedback-checkbox').forEach(cb => {
+            cb.checked = true;
+            const card = cb.closest('.feedback-item');
+            const feedbackId = card ? card.getAttribute('data-feedback-id') : null;
+            if (feedbackId && !selectedFeedbacks.includes(feedbackId)) {
+                selectedFeedbacks.push(feedbackId);
+                if (card) card.classList.add('selected');
+            }
+        });
+        updateBulkActionsBar();
+        return;
+    }
     selectedFeedbacks = [];
     document.querySelectorAll('.feedback-checkbox').forEach(cb => {
-        cb.checked = true;
         const card = cb.closest('.feedback-item');
-        const feedbackId = card ? card.getAttribute('data-feedback-id') : null;
-        if (feedbackId && !selectedFeedbacks.includes(feedbackId)) {
-            selectedFeedbacks.push(feedbackId);
-            if (card) card.classList.add('selected');
+        const inExpanded = card && card.closest('.agent-feedbacks.expanded');
+        if (!inExpanded) {
+            cb.checked = false;
+            if (card) card.classList.remove('selected');
         }
+    });
+    expandedSections.forEach(section => {
+        section.querySelectorAll('.feedback-checkbox').forEach(cb => {
+            cb.checked = true;
+            const card = cb.closest('.feedback-item');
+            const feedbackId = card ? card.getAttribute('data-feedback-id') : null;
+            if (feedbackId && !selectedFeedbacks.includes(feedbackId)) {
+                selectedFeedbacks.push(feedbackId);
+                if (card) card.classList.add('selected');
+            }
+        });
     });
     updateBulkActionsBar();
 }

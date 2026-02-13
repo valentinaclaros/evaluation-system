@@ -52,17 +52,42 @@ function toggleAuditSelection(auditId, checkbox) {
     updateBulkActionsBar();
 }
 
-// Seleccionar todo
+// Seleccionar todo: si hay un agente expandido, solo sus auditorías; si no hay ninguno abierto, todas
 function selectAll() {
+    const expandedSections = document.querySelectorAll('.agent-audits.expanded');
+    if (expandedSections.length === 0) {
+        selectedAudits = [];
+        document.querySelectorAll('.audit-checkbox').forEach(cb => {
+            cb.checked = true;
+            const card = cb.closest('.audit-item');
+            const auditId = card ? card.getAttribute('data-audit-id') : null;
+            if (auditId && !selectedAudits.includes(auditId)) {
+                selectedAudits.push(auditId);
+                if (card) card.classList.add('selected');
+            }
+        });
+        updateBulkActionsBar();
+        return;
+    }
     selectedAudits = [];
     document.querySelectorAll('.audit-checkbox').forEach(cb => {
-        cb.checked = true;
         const card = cb.closest('.audit-item');
-        const auditId = card ? card.getAttribute('data-audit-id') : null;
-        if (auditId && !selectedAudits.includes(auditId)) {
-            selectedAudits.push(auditId);
-            if (card) card.classList.add('selected');
+        const inExpanded = card && card.closest('.agent-audits.expanded');
+        if (!inExpanded) {
+            cb.checked = false;
+            if (card) card.classList.remove('selected');
         }
+    });
+    expandedSections.forEach(section => {
+        section.querySelectorAll('.audit-checkbox').forEach(cb => {
+            cb.checked = true;
+            const card = cb.closest('.audit-item');
+            const auditId = card ? card.getAttribute('data-audit-id') : null;
+            if (auditId && !selectedAudits.includes(auditId)) {
+                selectedAudits.push(auditId);
+                if (card) card.classList.add('selected');
+            }
+        });
     });
     updateBulkActionsBar();
 }
