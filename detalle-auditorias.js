@@ -16,7 +16,7 @@ let currentFilters = {
     dateFrom: null,
     dateTo: null,
     criticality: '',
-    bpo: ''
+    agentId: ''
 };
 
 // Array para guardar los IDs seleccionados
@@ -167,7 +167,7 @@ async function applyFilters() {
     const dateFrom = document.getElementById('filterDateFrom').value;
     const dateTo = document.getElementById('filterDateTo').value;
     const criticality = document.getElementById('filterCriticality').value;
-    const bpo = document.getElementById('filterBpo').value;
+    const agentId = document.getElementById('filterAgent').value;
     
     if (dateFrom && dateTo && new Date(dateFrom) > new Date(dateTo)) {
         alert('La fecha inicial no puede ser mayor a la fecha final');
@@ -177,7 +177,7 @@ async function applyFilters() {
     currentFilters.dateFrom = dateFrom || null;
     currentFilters.dateTo = dateTo || null;
     currentFilters.criticality = criticality;
-    currentFilters.bpo = bpo;
+    currentFilters.agentId = agentId || '';
     
     await loadAgentsWithAudits();
 }
@@ -187,6 +187,17 @@ async function loadAgentsWithAudits() {
     const agents = await getAgents();
     const audits = await getAudits();
     const container = document.getElementById('agentsContainer');
+    
+    // Rellenar select de Agente
+    const filterAgentSelect = document.getElementById('filterAgent');
+    if (filterAgentSelect && agents.length > 0) {
+        const currentValue = filterAgentSelect.value;
+        filterAgentSelect.innerHTML = '<option value="">Todos</option>' +
+            agents.map(a => `<option value="${(a.id || '').replace(/"/g, '&quot;')}">${String(a.name || a.id || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/"/g, '&quot;')}</option>`).join('');
+        if (currentValue && agents.some(a => a.id === currentValue)) {
+            filterAgentSelect.value = currentValue;
+        }
+    }
     
     if (agents.length === 0) {
         container.innerHTML = `
@@ -219,11 +230,6 @@ async function loadAgentsWithAudits() {
                 audit.criticality === currentFilters.criticality
             );
         }
-        if (currentFilters.bpo) {
-            agentAudits = agentAudits.filter(audit => 
-                audit.bpo === currentFilters.bpo
-            );
-        }
         
         // Ordenar por fecha (más recientes primero)
         agentAudits.sort((a, b) => new Date(b.callDate) - new Date(a.callDate));
@@ -244,8 +250,11 @@ async function loadAgentsWithAudits() {
         };
     });
     
-    // Filtrar agentes sin auditorías en el período seleccionado
-    const agentsWithData = agentsWithAudits.filter(a => a.totalAudits > 0);
+    // Filtrar por agente seleccionado (si aplica)
+    let agentsWithData = agentsWithAudits.filter(a => a.totalAudits > 0);
+    if (currentFilters.agentId) {
+        agentsWithData = agentsWithData.filter(a => a.agent.id === currentFilters.agentId);
+    }
     
     if (agentsWithData.length === 0) {
         container.innerHTML = `
@@ -477,13 +486,13 @@ async function clearFilters() {
     document.getElementById('filterDateFrom').value = '2026-01-01';
     document.getElementById('filterDateTo').value = today.toISOString().split('T')[0];
     document.getElementById('filterCriticality').value = '';
-    document.getElementById('filterBpo').value = '';
+    document.getElementById('filterAgent').value = '';
     
     currentFilters = {
         dateFrom: '2026-01-01',
         dateTo: today.toISOString().split('T')[0],
         criticality: '',
-        bpo: ''
+        agentId: ''
     };
     
     await loadAgentsWithAudits();
@@ -518,11 +527,6 @@ async function exportAgentScorecard(agentId) {
     if (currentFilters.criticality) {
         agentAudits = agentAudits.filter(audit => 
             audit.criticality === currentFilters.criticality
-        );
-    }
-    if (currentFilters.bpo) {
-        agentAudits = agentAudits.filter(audit => 
-            audit.bpo === currentFilters.bpo
         );
     }
     
