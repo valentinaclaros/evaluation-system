@@ -372,6 +372,7 @@ function mapExcelErrorsToChecklist(restText, callType) {
         .replace(/tiempos?\s*injustificados?\.?\s*/gi, '')
         .replace(/Errores\s*:\s*No(?!\s*se)\s*\.?\s*/gi, '')
         .replace(/Errores\s*:\s*Comentarios\s+adicionales\s*:\s*no\.?\s*/gi, '')
+        .replace(/Comentarios\s+adicionales\s*:\s*no\.?\s*/gi, '')
         .replace(/¿?\s*Tiempos\s+de\s+espera\s*\?\s*(?:No|S[ií]|SÍ)\s*/gi, ' ')
         .replace(/¿?\s*Se\s+intent[oó]\s+transferir\s*(?:la\s*llamada)?\s*\?\s*(?:No|S[ií]|SÍ)\s*/gi, ' ')
         .trim();
@@ -381,8 +382,9 @@ function mapExcelErrorsToChecklist(restText, callType) {
         var line = lines[i];
         // Quitar solo el prefijo "Errores: " o "Errores : " al inicio para matchear el contenido (no borrar "Errores: No" aquí, ya se limpió antes)
         var lineForMatch = line.replace(/^Errores\s*:\s*/i, '');
-        // No meter en notas líneas que solo son duración
+        // No meter en notas líneas que solo son duración ni "Comentarios adicionales: No"
         if (/^\s*llamada\s*\d{1,2}:\d{2}\s*$/i.test(line) || /^\s*\d{1,2}:\d{2}\s*llamada\s*$/i.test(line)) continue;
+        if (/^\s*Comentarios\s+adicionales\s*:\s*no\s*\.?\s*$/i.test(line)) continue;
         var isQuestion = /^\s*¿?por qué|^\s*¿?porque|^\s*¿/i.test(line) || (line.indexOf('?') >= 0 && line.length < 120);
         if (isQuestion || line.length > 200) {
             notesParts.push(line);
@@ -642,6 +644,7 @@ function parseXtronautError(text) {
         .replace(/intento\s+de\s+transferir[^.]*\.?\s*/gi, '')
         .replace(/Errores\s*:\s*No(?!\s*se)\s*\.?\s*/gi, '')
         .replace(/Errores\s*:\s*Comentarios\s+adicionales\s*:\s*no\.?\s*/gi, '')
+        .replace(/Comentarios\s+adicionales\s*:\s*no\.?\s*/gi, '')
         .replace(/(?:¿?)\s*Tiempos de espera\s*[?:\s]\s*(?:No|S[ií]|SÍ)(?:\s*\d{1,2}\s*min(?:utos)?)?\.?\s*/gi, '')
         .replace(/(?:¿?)\s*Se\s+intent[oó]\s+transferir\s*(?:la\s*llamada)?\s*[?:\s]\s*(?:No|S[ií]|SÍ)\.?\s*/gi, '')
         .replace(/Intent[oó]\s+transferir\s*(?:la\s*llamada)?\s*[?:\s]\s*(?:No|S[ií]|SÍ)\.?\s*/gi, '')

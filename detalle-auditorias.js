@@ -164,33 +164,58 @@ document.addEventListener('DOMContentLoaded', async function() {
 
 // Aplicar filtros
 async function applyFilters() {
-    const dateFrom = document.getElementById('filterDateFrom').value;
-    const dateTo = document.getElementById('filterDateTo').value;
-    const criticality = document.getElementById('filterCriticality').value;
-    const agentId = document.getElementById('filterAgent').value;
-    
-    if (dateFrom && dateTo && new Date(dateFrom) > new Date(dateTo)) {
-        alert('La fecha inicial no puede ser mayor a la fecha final');
-        return;
+    try {
+        const dateFromEl = document.getElementById('filterDateFrom');
+        const dateToEl = document.getElementById('filterDateTo');
+        const criticalityEl = document.getElementById('filterCriticality');
+        const agentEl = document.getElementById('filterAgent');
+        if (!dateFromEl || !dateToEl || !agentEl) return;
+        
+        const dateFrom = dateFromEl.value;
+        const dateTo = dateToEl.value;
+        const criticality = criticalityEl ? criticalityEl.value : '';
+        const agentId = agentEl.value || '';
+        
+        if (dateFrom && dateTo && new Date(dateFrom) > new Date(dateTo)) {
+            alert('La fecha inicial no puede ser mayor a la fecha final');
+            return;
+        }
+        
+        currentFilters.dateFrom = dateFrom || null;
+        currentFilters.dateTo = dateTo || null;
+        currentFilters.criticality = criticality;
+        currentFilters.agentId = agentId;
+        
+        await loadAgentsWithAudits();
+    } catch (e) {
+        console.error('Error al aplicar filtros:', e);
+        alert('Error al aplicar filtros. Revisa la consola.');
     }
-    
-    currentFilters.dateFrom = dateFrom || null;
-    currentFilters.dateTo = dateTo || null;
-    currentFilters.criticality = criticality;
-    currentFilters.agentId = agentId || '';
-    
-    await loadAgentsWithAudits();
 }
 
 // Cargar agentes con sus auditorías
 async function loadAgentsWithAudits() {
-    const agents = await getAgents();
+    let agents = await getAgents();
     const audits = await getAudits();
     const container = document.getElementById('agentsContainer');
     
-    // Rellenar select de Agente
+    // Si getAgents() no devuelve nada, obtener agentes que tengan auditorías
+    if ((!agents || agents.length === 0) && audits && audits.length > 0) {
+        const agentIds = [...new Set(audits.map(a => a.agentId).filter(Boolean))];
+        if (agentIds.length > 0 && typeof supabase !== 'undefined') {
+            try {
+                const { data } = await supabase.from('agents').select('id, name').in('id', agentIds).order('name', { ascending: true });
+                agents = data || [];
+            } catch (e) {
+                console.warn('No se pudieron cargar agentes desde auditorías:', e);
+            }
+        }
+    }
+    if (!agents) agents = [];
+    
+    // Rellenar select de Agente (siempre que haya al menos un agente)
     const filterAgentSelect = document.getElementById('filterAgent');
-    if (filterAgentSelect && agents.length > 0) {
+    if (filterAgentSelect) {
         const currentValue = filterAgentSelect.value;
         filterAgentSelect.innerHTML = '<option value="">Todos</option>' +
             agents.map(a => `<option value="${(a.id || '').replace(/"/g, '&quot;')}">${String(a.name || a.id || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/"/g, '&quot;')}</option>`).join('');
