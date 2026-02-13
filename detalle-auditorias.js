@@ -52,6 +52,21 @@ function toggleAuditSelection(auditId, checkbox) {
     updateBulkActionsBar();
 }
 
+// Seleccionar todo
+function selectAll() {
+    selectedAudits = [];
+    document.querySelectorAll('.audit-checkbox').forEach(cb => {
+        cb.checked = true;
+        const card = cb.closest('.audit-item');
+        const auditId = card ? card.getAttribute('data-audit-id') : null;
+        if (auditId && !selectedAudits.includes(auditId)) {
+            selectedAudits.push(auditId);
+            if (card) card.classList.add('selected');
+        }
+    });
+    updateBulkActionsBar();
+}
+
 // Deseleccionar todo
 function deselectAll() {
     selectedAudits = [];

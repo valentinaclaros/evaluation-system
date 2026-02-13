@@ -42,6 +42,21 @@ function toggleFeedbackSelection(feedbackId, checkbox) {
     updateBulkActionsBar();
 }
 
+// Seleccionar todo
+function selectAll() {
+    selectedFeedbacks = [];
+    document.querySelectorAll('.feedback-checkbox').forEach(cb => {
+        cb.checked = true;
+        const card = cb.closest('.feedback-item');
+        const feedbackId = card ? card.getAttribute('data-feedback-id') : null;
+        if (feedbackId && !selectedFeedbacks.includes(feedbackId)) {
+            selectedFeedbacks.push(feedbackId);
+            if (card) card.classList.add('selected');
+        }
+    });
+    updateBulkActionsBar();
+}
+
 // Deseleccionar todo
 function deselectAll() {
     selectedFeedbacks = [];

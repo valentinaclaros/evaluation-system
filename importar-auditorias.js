@@ -309,7 +309,7 @@ var EXCEL_ERROR_TO_CHECKLIST = [
     { pattern: /validar\s*producto|producto.*(saldo|deuda|cajita|pr[eé]stamo)|saldo\s*en\s*cajita|deuda\s*activa|compras\s*en\s*proceso|(no\s*)?valid[oó].*producto/i, ahorros: 'No se validó el producto (saldo en cajita, saldos mayores a $0,99, préstamo activo, etc.)', credito: 'TC: No se validó el producto (deuda activa, saldo a favor, compras en proceso, complaints activos, etc.)' },
     { pattern: /aproximaci[oó]n\s*saldo|(no\s*)?solicit[oó].*saldo|saldo.*aproximaci|pregunt[oó].*saldo\s*aproximado/i, ahorros: 'No se solicitó aproximación de saldo', credito: null },
     { pattern: /condiciones\s*(de\s*)?cancelaci[oó]n|(no\s*)?(ley[oó]|leer).*condiciones|condiciones.*no\s*ley|plazos\s*cancelaci[oó]n|leyeron\s*condiciones/i, ahorros: 'No se leyeron condiciones de cancelación', credito: 'TC: No se leyeron condiciones de cancelación' },
-    { pattern: /tarjeta(s)?\s*(virtual(es)?|físicas?)?|cancelar.*tarjeta|(no\s*)?(cancel[oó]|cancelaron).*tarjeta|tarjeta.*(no\s*)?cancel|no\s*cancel[oóa].*tarjeta|plasticos?\s*cancel/i, ahorros: 'No se cancelaron las tarjetas (físicas/virtuales)', credito: 'TC: No se cancelaron las tarjetas (físicas/virtuales)' },
+    { pattern: /no\s*(se\s*)?(cancel[oó]|cancelaron).*tarjeta|tarjeta(s)?\s*(virtual(es)?|físicas?)?\s*no\s*(se\s*)?(cancel[oó]|cancelaron)|tarjeta.*no\s*(se\s*)?cancel|plasticos?\s*no\s*cancel|no\s*cancelaron\s*(las\s*)?tarjetas?/i, ahorros: 'No se cancelaron las tarjetas (físicas/virtuales)', credito: 'TC: No se cancelaron las tarjetas (físicas/virtuales)' },
     { pattern: /secondary\s*job|secundary\s*job|(no\s*)?escal[oó].*job|escalar.*secondary|sj\s*no\s*escal|job\s*secundar/i, ahorros: 'No se escaló Secundary Job', credito: 'TC: No se escaló Secundary Job' },
     { pattern: /gesti[oó]n\s*realizada|(no\s*)?confirm[oó].*gesti|confirmar\s*gesti[oó]n|resumen\s*gesti[oó]n|cierre\s*de\s*gesti[oó]n/i, ahorros: 'No se confirmó la gestión realizada', credito: 'TC: No se confirmó la gestión realizada' },
     { pattern: /case\s*management|(no\s*)?promueve.*case|promovi[oó].*case|case\s*management.*no|gestionar\s*caso|no\s*promueve\s*case|-?no\s*promueve\s*case/i, ahorros: 'No se promueve case management', credito: 'TC: No se promueve case management' },
@@ -318,8 +318,8 @@ var EXCEL_ERROR_TO_CHECKLIST = [
 ];
 // Palabras clave: si la línea contiene TODAS estas palabras (en cualquier orden) → error. Intuitivo, no literal.
 var FLEXIBLE_KEYWORDS = [
-    { keywords: ['tarjeta', 'virtual'], ahorros: 'No se cancelaron las tarjetas (físicas/virtuales)', credito: 'TC: No se cancelaron las tarjetas (físicas/virtuales)' },
-    { keywords: ['tarjeta', 'cancel'], ahorros: 'No se cancelaron las tarjetas (físicas/virtuales)', credito: 'TC: No se cancelaron las tarjetas (físicas/virtuales)' },
+    { keywords: ['tarjeta', 'no', 'cancel'], ahorros: 'No se cancelaron las tarjetas (físicas/virtuales)', credito: 'TC: No se cancelaron las tarjetas (físicas/virtuales)' },
+    { keywords: ['tarjeta', 'no', 'cancelar'], ahorros: 'No se cancelaron las tarjetas (físicas/virtuales)', credito: 'TC: No se cancelaron las tarjetas (físicas/virtuales)' },
     { keywords: ['tiempo', 'cancelación'], ahorros: 'Se dan tiempos de cancelación incorrectos', credito: 'TC: Se dan tiempos de cancelación incorrectos' },
     { keywords: ['tiempos', 'mencion'], ahorros: 'Se dan tiempos de cancelación incorrectos', credito: 'TC: Se dan tiempos de cancelación incorrectos' },
     { keywords: ['tags'], ahorros: 'No se validaron Tags', credito: 'TC: No se validaron Tags' },
@@ -370,13 +370,17 @@ function mapExcelErrorsToChecklist(restText, callType) {
         .replace(/espera\s*(?:de\s*)?\d{1,2}\s*min(?:utos)?/gi, '')
         .replace(/se dej[oó]\s*esperando[^.]*\.?\s*/gi, '')
         .replace(/tiempos?\s*injustificados?\.?\s*/gi, '')
-        .replace(/Errores\s*:\s*No\.?\s*/gi, '')
+        .replace(/Errores\s*:\s*No(?!\s*se)\s*\.?\s*/gi, '')
+        .replace(/Errores\s*:\s*Comentarios\s+adicionales\s*:\s*no\.?\s*/gi, '')
         .replace(/¿?\s*Tiempos\s+de\s+espera\s*\?\s*(?:No|S[ií]|SÍ)\s*/gi, ' ')
         .replace(/¿?\s*Se\s+intent[oó]\s+transferir\s*(?:la\s*llamada)?\s*\?\s*(?:No|S[ií]|SÍ)\s*/gi, ' ')
         .trim();
-    var lines = cleaned.split(/\n|\.\s+|\?\s+/).map(function(s) { return s.trim(); }).filter(Boolean);
+    // Partir solo por saltos de línea para no cortar comentarios ni el texto después de "Errores:"
+    var lines = cleaned.split(/\r?\n/).map(function(s) { return s.trim(); }).filter(Boolean);
     for (var i = 0; i < lines.length; i++) {
         var line = lines[i];
+        // Quitar solo el prefijo "Errores: " o "Errores : " al inicio para matchear el contenido (no borrar "Errores: No" aquí, ya se limpió antes)
+        var lineForMatch = line.replace(/^Errores\s*:\s*/i, '');
         // No meter en notas líneas que solo son duración
         if (/^\s*llamada\s*\d{1,2}:\d{2}\s*$/i.test(line) || /^\s*\d{1,2}:\d{2}\s*llamada\s*$/i.test(line)) continue;
         var isQuestion = /^\s*¿?por qué|^\s*¿?porque|^\s*¿/i.test(line) || (line.indexOf('?') >= 0 && line.length < 120);
@@ -385,10 +389,10 @@ function mapExcelErrorsToChecklist(restText, callType) {
             continue;
         }
         var matched = false;
-        // 1) Patrones (gramática variada: canceló/cancela/cancelaron, validar/validó, etc.)
+        // 1) Patrones (usar lineForMatch para que "Errores: No se validaron tags" matchee como "No se validaron tags")
         for (var j = 0; j < EXCEL_ERROR_TO_CHECKLIST.length; j++) {
             var rule = EXCEL_ERROR_TO_CHECKLIST[j];
-            if (rule.pattern.test(line)) {
+            if (rule.pattern.test(lineForMatch)) {
                 if (isTarjeta && rule.credito && errors.indexOf(rule.credito) === -1) errors.push(rule.credito);
                 if ((isAhorros || isMulti) && rule.ahorros && errors.indexOf(rule.ahorros) === -1) errors.push(rule.ahorros);
                 if ((isTarjeta || isMulti) && rule.credito && errors.indexOf(rule.credito) === -1) errors.push(rule.credito);
@@ -396,10 +400,10 @@ function mapExcelErrorsToChecklist(restText, callType) {
             }
         }
         // 2) Si no coincidió: interpretar por palabras clave (flexible con redacción/typos)
-        if (!matched && line.length > 3) {
+        if (!matched && lineForMatch.length > 3) {
             for (var k = 0; k < FLEXIBLE_KEYWORDS.length; k++) {
                 var flex = FLEXIBLE_KEYWORDS[k];
-                if (lineMatchesKeywords(line, flex.keywords)) {
+                if (lineMatchesKeywords(lineForMatch, flex.keywords)) {
                     if (isTarjeta && flex.credito && errors.indexOf(flex.credito) === -1) errors.push(flex.credito);
                     if ((isAhorros || isMulti) && flex.ahorros && errors.indexOf(flex.ahorros) === -1) errors.push(flex.ahorros);
                     if ((isTarjeta || isMulti) && flex.credito && errors.indexOf(flex.credito) === -1) errors.push(flex.credito);
@@ -552,8 +556,9 @@ function parseXtronautError(text) {
     var transferAttempt = 'no';
     var explicitNoErrors = false;
 
-    // 0) "Errores: No" → no hay errores, no se debe agregar Otro
-    if (/Errores\s*:\s*No|Errores:\s*No/i.test(t)) explicitNoErrors = true;
+    // 0) "Errores: No" (solo cuando es "no hay errores") o "Errores: Comentarios adicionales: no" → no agregar Otro. No confundir con "Errores: No se validaron..."
+    if (/Errores\s*:\s*No(?!\s*se)/i.test(t)) explicitNoErrors = true;
+    if (/Errores\s*:\s*Comentarios\s+adicionales\s*:\s*no/i.test(t)) explicitNoErrors = true;
 
     // 0b) Preguntas con respuesta: detectar para llenar campos (antes de quitar del texto)
     // ¿Tiempos de espera? No / Sí  O  ¿Tiempos de espera?: 3 minutos (número = SÍ con ese tiempo)
@@ -635,7 +640,8 @@ function parseXtronautError(text) {
         .replace(/agente\s+intent[oó]\s+transferir[^.]*\.?\s*/gi, '')
         .replace(/intent[oó]\s+transferir\s*(la\s*llamada)?[^.]*\.?\s*/gi, '')
         .replace(/intento\s+de\s+transferir[^.]*\.?\s*/gi, '')
-        .replace(/Errores\s*:\s*No\.?\s*/gi, '')
+        .replace(/Errores\s*:\s*No(?!\s*se)\s*\.?\s*/gi, '')
+        .replace(/Errores\s*:\s*Comentarios\s+adicionales\s*:\s*no\.?\s*/gi, '')
         .replace(/(?:¿?)\s*Tiempos de espera\s*[?:\s]\s*(?:No|S[ií]|SÍ)(?:\s*\d{1,2}\s*min(?:utos)?)?\.?\s*/gi, '')
         .replace(/(?:¿?)\s*Se\s+intent[oó]\s+transferir\s*(?:la\s*llamada)?\s*[?:\s]\s*(?:No|S[ií]|SÍ)\.?\s*/gi, '')
         .replace(/Intent[oó]\s+transferir\s*(?:la\s*llamada)?\s*[?:\s]\s*(?:No|S[ií]|SÍ)\.?\s*/gi, '')
