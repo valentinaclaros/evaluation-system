@@ -1,46 +1,23 @@
-# Sistema de Evaluación del Desempeño
+# Sistema de auditorías
 
-Sistema web para gestionar auditorías de llamadas, feedbacks de agentes y análisis de desempeño.
+Sistema web para gestionar auditorías de llamadas, feedbacks y agentes (Teleperformance / Konecta). Datos en **Supabase**.
 
-## 🚀 Cómo usar
+## Cómo usar
 
-1. Abre `index.html` en tu navegador web
-2. El sistema funciona completamente en el navegador (usa localStorage)
-3. No requiere instalación ni servidor
+1. Configura `supabase-config.js` con tu URL y clave de Supabase.
+2. Abre `index.html` en el navegador (o sirve la carpeta con un servidor local).
 
-## 📁 Estructura del proyecto
+## Estructura
 
-```
-├── index.html              # Dashboard principal
-├── styles.css              # Estilos del sistema
-├── app.js                  # Funciones comunes y manejo de datos
-├── dashboard.js            # Lógica del dashboard
-├── agentes.html            # Gestión de agentes
-├── agentes.js              # Lógica de agentes
-├── analisis.html           # Análisis de mejoras
-├── analisis.js             # Lógica de análisis
-├── registrar-llamada.html  # Registro de auditorías
-├── registrar-llamada.js    # Lógica de auditorías
-├── registrar-feedback.html # Registro de feedbacks
-└── registrar-feedback.js   # Lógica de feedbacks
-```
+- **Dashboard** (`index.html`): barra lateral, barra superior, sección Agents (burbujas por BPO).
+- **Auditorías** → detalle y listado.
+- **Feedbacks** → detalle y listado.
+- **MAIN**: Dashboard, Schedule (calendario), Metrics, Agent reports.
+- **RECORDS**: Team (Top Offenders).
+- **Settings** → gestión de agentes.
+- **Registrar auditoría** / **Registrar feedback** desde las páginas de detalle.
 
-## 📊 Funcionalidades
+## SQL (Supabase)
 
-- **Dashboard**: Visualización de métricas generales, TNPS, criticidad de errores
-- **Gestión de Agentes**: Agregar, editar y desactivar agentes
-- **Registro de Auditorías**: Documentar llamadas auditadas con errores y criticidad
-- **Registro de Feedbacks**: Dar retroalimentación a los agentes
-- **Análisis**: Ver el desempeño de agentes en períodos específicos
-
-## 💾 Datos
-
-Los datos se almacenan localmente en tu navegador usando localStorage. Para limpiar todos los datos, usa la función de limpieza en el dashboard.
-
-## 🌐 Navegación
-
-- **Dashboard**: Inicio / Vista general
-- **Registrar Auditoría**: Registrar nuevas auditorías de llamadas
-- **Registrar Feedback**: Dar feedback a agentes
-- **Análisis de Mejoras**: Ver análisis detallado por agente
-- **Gestión de Agentes**: Administrar la lista de agentes
+- `BORRAR_TODOS_LOS_DATOS.sql`: vacía auditorías, agentes, feedbacks y strikes.
+- `HABILITAR_RLS_AGENTES_Y_DATOS.sql`: políticas RLS para que la app pueda leer/escribir.
