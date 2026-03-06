@@ -350,95 +350,229 @@
                 font-size: 1.1rem;
             }
         }
+
+        /* Agents bubbles (Todo list style) */
+        .agents-bubbles-section {
+            margin-bottom: 2rem;
+        }
+        .agents-bubbles-header {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+        .agents-bubbles-arrow-btn {
+            background: none;
+            border: none;
+            color: #374151;
+            font-size: 0.85rem;
+            cursor: pointer;
+            padding: 0.25rem;
+            line-height: 1;
+            transition: transform 0.2s ease;
+        }
+        .agents-bubbles-arrow-btn.expanded {
+            transform: rotate(90deg);
+        }
+        .agents-bubbles-section.collapsed .agents-bubbles-row {
+            display: none;
+        }
+        .agents-bubbles-title {
+            font-size: 1rem;
+            font-weight: 700;
+            color: #374151;
+            margin: 0;
+        }
+        .agents-bubbles-row {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            max-width: 480px;
+        }
+        .agents-bubble {
+            border-radius: 12px;
+            padding: 1.25rem 1.5rem;
+            position: relative;
+            min-height: 140px;
+        }
+        .agents-bubble-blue {
+            background: #dbeafe;
+            color: #1e40af;
+        }
+        .agents-bubble-purple {
+            background: #ede9fe;
+            color: #5b21b6;
+        }
+        .agents-bubble-options {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            background: none;
+            border: none;
+            color: inherit;
+            opacity: 0.7;
+            font-size: 1.1rem;
+            cursor: pointer;
+            padding: 0.25rem;
+        }
+        .agents-bubble-title {
+            font-size: 1.1rem;
+            font-weight: 700;
+            margin: 0 0 1rem 0;
+            padding-right: 1.5rem;
+        }
+        .agents-bubble-blue .agents-bubble-title { color: #1e3a8a; }
+        .agents-bubble-purple .agents-bubble-title { color: #4c1d95; }
+        .agents-bubble-progress-row {
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            flex-wrap: wrap;
+        }
+        .agents-bubble-progress-label {
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+        .agents-bubble-dots {
+            display: flex;
+            gap: 4px;
+        }
+        .agents-bubble-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+        }
+        .agents-bubble-blue .agents-bubble-dot.filled { background: #1e40af; }
+        .agents-bubble-blue .agents-bubble-dot.empty { background: #93c5fd; }
+        .agents-bubble-purple .agents-bubble-dot.filled { background: #5b21b6; }
+        .agents-bubble-purple .agents-bubble-dot.empty { background: #c4b5fd; }
+        .agents-bubble-progress-value {
+            font-size: 0.9rem;
+            font-weight: 600;
+            margin-left: auto;
+        }
     </style>
 </head>
 <body>
-    <nav class="navbar">
-        <div class="nav-container">
-            <div class="nav-brand">
-                <h1>📊 Sistema de Evaluación</h1>
+    <div class="app-layout">
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <div class="sidebar-brand">
+                    <div class="sidebar-logo"></div>
+                    <span class="sidebar-brand-text">Sistema de auditorías</span>
+                </div>
+                <button type="button" class="sidebar-toggle" id="sidebarToggle" aria-label="Colapsar menú">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+                </button>
             </div>
-            <ul class="nav-menu">
-                <li><a href="index.html">Dashboard</a></li>
-                <li><a href="detalle-auditorias.html" class="active">Detalle de Auditorías</a></li>
-                <li><a href="importar-auditorias.html">Importar Auditorías</a></li>
-                <li><a href="detalle-feedbacks.html">Detalle de Feedbacks</a></li>
-                <li><a href="analisis-avanzado.html">Análisis Avanzado</a></li>
-                <li><a href="agentes.html">Gestión de Agentes</a></li>
-                <li><a href="sj-pendientes.html">SJ Pendientes</a></li>
-            </ul>
-        </div>
-    </nav>
-
+            <nav class="sidebar-nav">
+                <a href="detalle-auditorias.html" class="sidebar-link" id="nav-auditorias">
+                    <span class="sidebar-link-icon icon-check-circle">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10" fill="none"/><path d="M9 12l2 2 4-4"/></svg>
+                    </span>
+                    <span class="sidebar-text">Auditorías</span>
+                    <span class="sidebar-badge" id="sidebar-auditorias-badge">0</span>
+                </a>
+                <a href="detalle-feedbacks.html" class="sidebar-link" id="nav-feedbacks">
+                    <span class="sidebar-link-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+                    </span>
+                    <span class="sidebar-text">Feedbacks</span>
+                </a>
+                <span class="sidebar-section-title">MAIN</span>
+                <a href="index.html" class="sidebar-link" id="nav-dashboard">
+                    <span class="sidebar-link-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+                    </span>
+                    <span class="sidebar-text">Dashboard</span>
+                </a>
+                <a href="calendario-mensual.html" class="sidebar-link" id="nav-schedule">
+                    <span class="sidebar-link-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                    </span>
+                    <span class="sidebar-text">Schedule</span>
+                </a>
+                <a href="analisis-avanzado.html" class="sidebar-link" id="nav-metrics">
+                    <span class="sidebar-link-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="16.5" y1="9.4" x2="7.5" y2="4.21"/><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/></svg>
+                    </span>
+                    <span class="sidebar-text">Metrics</span>
+                </a>
+                <a href="analisis.html" class="sidebar-link" id="nav-reports">
+                    <span class="sidebar-link-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+                    </span>
+                    <span class="sidebar-text">Agent reports</span>
+                </a>
+                <span class="sidebar-section-title">RECORDS</span>
+                <a href="top-offenders.html" class="sidebar-link" id="nav-team">
+                    <span class="sidebar-link-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                    </span>
+                    <span class="sidebar-text">Team</span>
+                </a>
+            </nav>
+            <div class="sidebar-footer">
+                <a href="agentes.html" class="sidebar-link" id="nav-settings">
+                    <span class="sidebar-link-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+                    </span>
+                    <span class="sidebar-text">Settings</span>
+                </a>
+            </div>
+        </aside>
+        <div class="main-content-wrap">
+            <header class="top-header">
+                <span class="top-header-welcome">Welcome</span>
+                <div class="top-header-search-wrap">
+                    <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+                    <input type="search" placeholder="Find something" aria-label="Buscar">
+                </div>
+                <div class="top-header-actions">
+                    <button type="button" class="top-header-btn-icon" aria-label="Ayuda / FAQ" title="Ayuda">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><path d="M12 17h.01"/></svg>
+                    </button>
+                    <button type="button" class="top-header-btn-icon" aria-label="Notificaciones" title="Notificaciones">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
+                    </button>
+                </div>
+            </header>
     <main class="container">
-        <header class="page-header">
-            <h2>Detalle de Auditorías por Agente</h2>
-            <p class="subtitle">Haz clic en un agente para ver todas sus auditorías</p>
-        </header>
-
-        <!-- Filtros -->
-        <div class="filter-section">
-            <div class="filter-row">
-                <div class="filter-group">
-                    <label for="filterDateFrom">Desde:</label>
-                    <input type="date" id="filterDateFrom">
+        <section class="agents-bubbles-section" id="agentsBubblesSection">
+            <header class="agents-bubbles-header">
+                <button type="button" class="agents-bubbles-arrow-btn expanded" id="agentsBubblesToggle" aria-label="Desplegar o reducir">▶</button>
+                <h2 class="agents-bubbles-title">Agents</h2>
+            </header>
+            <div class="agents-bubbles-row">
+                <div class="agents-bubble agents-bubble-blue">
+                    <button type="button" class="agents-bubble-options" aria-label="Opciones">⋮</button>
+                    <h3 class="agents-bubble-title">Teleperformance - Agents</h3>
+                    <div class="agents-bubble-progress-row">
+                        <span class="agents-bubble-progress-label">Agents</span>
+                        <div class="agents-bubble-dots" id="dotsTeleperformance" aria-hidden="true"></div>
+                        <span class="agents-bubble-progress-value" id="countTeleperformance">0</span>
+                    </div>
                 </div>
-                <div class="filter-group">
-                    <label for="filterDateTo">Hasta:</label>
-                    <input type="date" id="filterDateTo">
-                </div>
-                <div class="filter-group">
-                    <label for="filterCriticality">Criticidad:</label>
-                    <select id="filterCriticality">
-                        <option value="">Todas</option>
-                        <option value="critico">Crítico</option>
-                        <option value="alto">Alto</option>
-                        <option value="medio">Medio</option>
-                        <option value="perfecto">Perfecto</option>
-                    </select>
-                </div>
-                <div class="filter-group">
-                    <label for="filterAgent">Agente:</label>
-                    <select id="filterAgent">
-                        <option value="">Todos</option>
-                    </select>
-                </div>
-                <div class="filter-group">
-                    <button type="button" onclick="applyFilters()" class="btn btn-primary" style="width: 100%;">Aplicar Filtros</button>
+                <div class="agents-bubble agents-bubble-purple">
+                    <button type="button" class="agents-bubble-options" aria-label="Opciones">⋮</button>
+                    <h3 class="agents-bubble-title">Konecta - Agents</h3>
+                    <div class="agents-bubble-progress-row">
+                        <span class="agents-bubble-progress-label">Agents</span>
+                        <div class="agents-bubble-dots" id="dotsKonecta" aria-hidden="true"></div>
+                        <span class="agents-bubble-progress-value" id="countKonecta">0</span>
+                    </div>
                 </div>
             </div>
-        </div>
-
-        <!-- Barra de acciones en lote -->
-        <div id="bulkActionsBar" class="bulk-actions-bar">
-            <div class="bulk-info">
-                <span class="bulk-count" id="selectedCount">0 seleccionados</span>
-            </div>
-            <div class="bulk-buttons">
-                <button onclick="selectAll()" class="btn btn-secondary" style="padding: 0.5rem 1rem;">
-                    Seleccionar todo
-                </button>
-                <button onclick="deselectAll()" class="btn btn-secondary" style="padding: 0.5rem 1rem;">
-                    Deseleccionar todo
-                </button>
-                <button onclick="deleteSelected()" class="btn btn-danger" style="padding: 0.5rem 1rem;">
-                    🗑️ Eliminar seleccionados
-                </button>
-            </div>
-        </div>
-
-        <!-- Contenedor de agentes -->
-        <div id="agentsContainer">
-            <div class="no-audits">
-                Cargando agentes...
-            </div>
-        </div>
+        </section>
     </main>
+        </div>
+    </div>
 
     <!-- Supabase SDK v2 -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.0/dist/umd/supabase.min.js"></script>
     <script src="supabase-config.js"></script>
     <script src="app.js"></script>
-    <script src="detalle-auditorias.js"></script>
+    <script src="sidebar.js"></script>
+    <script src="detalle-auditorias-agents.js"></script>
 </body>
 </html>

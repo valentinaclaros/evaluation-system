@@ -3,36 +3,20 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-    <meta http-equiv="Pragma" content="no-cache">
-    <meta http-equiv="Expires" content="0">
-    <title>Sistema de auditorías</title>
+    <title>Schedule - Casos críticos por día | Sistema de auditorías</title>
     <link rel="stylesheet" href="styles.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        .agents-bubbles-section { margin-bottom: 2rem; }
-        .agents-bubbles-header { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 1rem; }
-        .agents-bubbles-arrow-btn { background: none; border: none; color: #374151; font-size: 0.85rem; cursor: pointer; padding: 0.25rem; line-height: 1; transition: transform 0.2s ease; }
-        .agents-bubbles-arrow-btn.expanded { transform: rotate(90deg); }
-        .agents-bubbles-section.collapsed .agents-bubbles-row { display: none; }
-        .agents-bubbles-title { font-size: 1rem; font-weight: 700; color: #374151; margin: 0; }
-        .agents-bubbles-row { display: flex; flex-direction: column; gap: 1rem; max-width: 480px; }
-        .agents-bubble { border-radius: 12px; padding: 1.25rem 1.5rem; position: relative; min-height: 140px; }
-        .agents-bubble-blue { background: #dbeafe; color: #1e40af; }
-        .agents-bubble-purple { background: #ede9fe; color: #5b21b6; }
-        .agents-bubble-options { position: absolute; top: 1rem; right: 1rem; background: none; border: none; color: inherit; opacity: 0.7; font-size: 1.1rem; cursor: pointer; padding: 0.25rem; }
-        .agents-bubble-title { font-size: 1.1rem; font-weight: 700; margin: 0 0 1rem 0; padding-right: 1.5rem; }
-        .agents-bubble-blue .agents-bubble-title { color: #1e3a8a; }
-        .agents-bubble-purple .agents-bubble-title { color: #4c1d95; }
-        .agents-bubble-progress-row { display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap; }
-        .agents-bubble-progress-label { font-size: 0.9rem; opacity: 0.9; }
-        .agents-bubble-dots { display: flex; gap: 4px; }
-        .agents-bubble-dot { width: 10px; height: 10px; border-radius: 50%; }
-        .agents-bubble-blue .agents-bubble-dot.filled { background: #1e40af; }
-        .agents-bubble-blue .agents-bubble-dot.empty { background: #93c5fd; }
-        .agents-bubble-purple .agents-bubble-dot.filled { background: #5b21b6; }
-        .agents-bubble-purple .agents-bubble-dot.empty { background: #c4b5fd; }
-        .agents-bubble-progress-value { font-size: 0.9rem; font-weight: 600; margin-left: auto; }
+        .calendar-controls { display: flex; align-items: center; gap: 1rem; margin-bottom: 1.5rem; flex-wrap: wrap; }
+        .calendar-controls h2 { margin: 0; font-size: 1.5rem; }
+        .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; max-width: 900px; }
+        .calendar-day-header { padding: 0.5rem; text-align: center; font-weight: 600; font-size: 0.8rem; color: var(--text-secondary); }
+        .calendar-cell { aspect-ratio: 1; max-width: 120px; border: 1px solid var(--border-color); border-radius: var(--border-radius-sm); padding: 0.5rem; display: flex; flex-direction: column; align-items: center; justify-content: center; background: var(--bg-primary); min-height: 80px; }
+        .calendar-cell.empty { background: var(--bg-tertiary); color: var(--text-light); }
+        .calendar-cell.has-critical { background: #fef2f2; border-color: #fecaca; }
+        .calendar-cell .day-num { font-weight: 700; font-size: 1rem; }
+        .calendar-cell .count { font-size: 0.85rem; color: var(--error-color); font-weight: 600; margin-top: 4px; }
+        .calendar-legend { margin-top: 1rem; font-size: 0.9rem; color: var(--text-secondary); }
     </style>
 </head>
 <body>
@@ -119,43 +103,97 @@
                     </button>
                 </div>
             </header>
-    <main class="container">
-        <section class="agents-bubbles-section" id="agentsBubblesSection">
-            <header class="agents-bubbles-header">
-                <button type="button" class="agents-bubbles-arrow-btn expanded" id="agentsBubblesToggle" aria-label="Desplegar o reducir">▶</button>
-                <h2 class="agents-bubbles-title">Agents</h2>
-            </header>
-            <div class="agents-bubbles-row">
-                <div class="agents-bubble agents-bubble-blue">
-                    <button type="button" class="agents-bubble-options" aria-label="Opciones">⋮</button>
-                    <h3 class="agents-bubble-title">Teleperformance - Agents</h3>
-                    <div class="agents-bubble-progress-row">
-                        <span class="agents-bubble-progress-label">Agents</span>
-                        <div class="agents-bubble-dots" id="dotsTeleperformance" aria-hidden="true"></div>
-                        <span class="agents-bubble-progress-value" id="countTeleperformance">0</span>
-                    </div>
+            <main class="container">
+                <header class="page-header">
+                    <h2>Schedule – Casos críticos por día</h2>
+                    <p class="subtitle">Total de casos críticos por día según las auditorías subidas</p>
+                </header>
+                <div class="calendar-controls">
+                    <button type="button" class="btn btn-secondary" id="prevMonth">← Mes anterior</button>
+                    <h2 id="calendarTitle">Marzo 2026</h2>
+                    <button type="button" class="btn btn-secondary" id="nextMonth">Mes siguiente →</button>
                 </div>
-                <div class="agents-bubble agents-bubble-purple">
-                    <button type="button" class="agents-bubble-options" aria-label="Opciones">⋮</button>
-                    <h3 class="agents-bubble-title">Konecta - Agents</h3>
-                    <div class="agents-bubble-progress-row">
-                        <span class="agents-bubble-progress-label">Agents</span>
-                        <div class="agents-bubble-dots" id="dotsKonecta" aria-hidden="true"></div>
-                        <span class="agents-bubble-progress-value" id="countKonecta">0</span>
-                    </div>
-                </div>
-            </div>
-        </section>
-    </main>
+                <div class="calendar-grid" id="calendarGrid"></div>
+                <p class="calendar-legend">Los días con fondo rojo muestran el total de auditorías con criticidad &quot;Crítico&quot; en esa fecha.</p>
+            </main>
         </div>
     </div>
-
-    <!-- Supabase SDK v2 -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.0/dist/umd/supabase.min.js"></script>
     <script src="supabase-config.js"></script>
     <script src="app.js"></script>
     <script src="sidebar.js"></script>
-    <script src="detalle-auditorias-agents.js"></script>
+    <script>
+(function() {
+    let currentYear, currentMonth;
+    const dayNames = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
+
+    function init() {
+        const now = new Date();
+        currentYear = now.getFullYear();
+        currentMonth = now.getMonth();
+        document.getElementById('prevMonth').addEventListener('click', () => { currentMonth--; if (currentMonth < 0) { currentMonth = 11; currentYear--; } render(); });
+        document.getElementById('nextMonth').addEventListener('click', () => { currentMonth++; if (currentMonth > 11) { currentMonth = 0; currentYear++; } render(); });
+        render();
+    }
+
+    function render() {
+        const title = document.getElementById('calendarTitle');
+        const monthNames = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+        title.textContent = monthNames[currentMonth] + ' ' + currentYear;
+
+        const grid = document.getElementById('calendarGrid');
+        grid.innerHTML = '';
+        dayNames.forEach(d => {
+            const h = document.createElement('div');
+            h.className = 'calendar-day-header';
+            h.textContent = d;
+            grid.appendChild(h);
+        });
+
+        const first = new Date(currentYear, currentMonth, 1);
+        const last = new Date(currentYear, currentMonth + 1, 0);
+        const startPad = first.getDay();
+        const daysInMonth = last.getDate();
+
+        for (let i = 0; i < startPad; i++) {
+            const cell = document.createElement('div');
+            cell.className = 'calendar-cell empty';
+            grid.appendChild(cell);
+        }
+        for (let d = 1; d <= daysInMonth; d++) {
+            const cell = document.createElement('div');
+            cell.className = 'calendar-cell';
+            cell.dataset.date = currentYear + '-' + String(currentMonth + 1).padStart(2, '0') + '-' + String(d).padStart(2, '0');
+            cell.innerHTML = '<span class="day-num">' + d + '</span><span class="count" data-count>0</span>';
+            grid.appendChild(cell);
+        }
+
+        loadCriticalCounts();
+    }
+
+    async function loadCriticalCounts() {
+        const audits = typeof getAudits === 'function' ? await getAudits() : [];
+        const criticalByDate = {};
+        audits.forEach(a => {
+            const c = (a.criticality || '').toLowerCase();
+            if (c !== 'critico' && c !== 'crítico') return;
+            const d = (a.callDate || a.auditDate || '').toString().split('T')[0];
+            if (!d) return;
+            criticalByDate[d] = (criticalByDate[d] || 0) + 1;
+        });
+
+        document.querySelectorAll('.calendar-cell[data-date]').forEach(cell => {
+            const date = cell.dataset.date;
+            const count = criticalByDate[date] || 0;
+            const countEl = cell.querySelector('[data-count]');
+            if (countEl) countEl.textContent = count;
+            if (count > 0) cell.classList.add('has-critical');
+        });
+    }
+
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
+    else init();
+})();
+    </script>
 </body>
 </html>
-

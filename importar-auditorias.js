@@ -382,9 +382,10 @@ function mapExcelErrorsToChecklist(restText, callType) {
         var line = lines[i];
         // Quitar solo el prefijo "Errores: " o "Errores : " al inicio para matchear el contenido (no borrar "Errores: No" aquí, ya se limpió antes)
         var lineForMatch = line.replace(/^Errores\s*:\s*/i, '');
-        // No meter en notas líneas que solo son duración ni "Comentarios adicionales: No"
+        // No meter en notas líneas que solo son duración, "Comentarios adicionales: No" ni la etiqueta suelta "Errores:"
         if (/^\s*llamada\s*\d{1,2}:\d{2}\s*$/i.test(line) || /^\s*\d{1,2}:\d{2}\s*llamada\s*$/i.test(line)) continue;
         if (/^\s*Comentarios\s+adicionales\s*:\s*no\s*\.?\s*$/i.test(line)) continue;
+        if (/^\s*Errores\s*:\s*$/i.test(line)) continue;
         var isQuestion = /^\s*¿?por qué|^\s*¿?porque|^\s*¿/i.test(line) || (line.indexOf('?') >= 0 && line.length < 120);
         if (isQuestion || line.length > 200) {
             notesParts.push(line);

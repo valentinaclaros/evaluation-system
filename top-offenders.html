@@ -3,36 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-    <meta http-equiv="Pragma" content="no-cache">
-    <meta http-equiv="Expires" content="0">
-    <title>Sistema de auditorías</title>
+    <title>Team - Top Offenders | Sistema de auditorías</title>
     <link rel="stylesheet" href="styles.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        .agents-bubbles-section { margin-bottom: 2rem; }
-        .agents-bubbles-header { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 1rem; }
-        .agents-bubbles-arrow-btn { background: none; border: none; color: #374151; font-size: 0.85rem; cursor: pointer; padding: 0.25rem; line-height: 1; transition: transform 0.2s ease; }
-        .agents-bubbles-arrow-btn.expanded { transform: rotate(90deg); }
-        .agents-bubbles-section.collapsed .agents-bubbles-row { display: none; }
-        .agents-bubbles-title { font-size: 1rem; font-weight: 700; color: #374151; margin: 0; }
-        .agents-bubbles-row { display: flex; flex-direction: column; gap: 1rem; max-width: 480px; }
-        .agents-bubble { border-radius: 12px; padding: 1.25rem 1.5rem; position: relative; min-height: 140px; }
-        .agents-bubble-blue { background: #dbeafe; color: #1e40af; }
-        .agents-bubble-purple { background: #ede9fe; color: #5b21b6; }
-        .agents-bubble-options { position: absolute; top: 1rem; right: 1rem; background: none; border: none; color: inherit; opacity: 0.7; font-size: 1.1rem; cursor: pointer; padding: 0.25rem; }
-        .agents-bubble-title { font-size: 1.1rem; font-weight: 700; margin: 0 0 1rem 0; padding-right: 1.5rem; }
-        .agents-bubble-blue .agents-bubble-title { color: #1e3a8a; }
-        .agents-bubble-purple .agents-bubble-title { color: #4c1d95; }
-        .agents-bubble-progress-row { display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap; }
-        .agents-bubble-progress-label { font-size: 0.9rem; opacity: 0.9; }
-        .agents-bubble-dots { display: flex; gap: 4px; }
-        .agents-bubble-dot { width: 10px; height: 10px; border-radius: 50%; }
-        .agents-bubble-blue .agents-bubble-dot.filled { background: #1e40af; }
-        .agents-bubble-blue .agents-bubble-dot.empty { background: #93c5fd; }
-        .agents-bubble-purple .agents-bubble-dot.filled { background: #5b21b6; }
-        .agents-bubble-purple .agents-bubble-dot.empty { background: #c4b5fd; }
-        .agents-bubble-progress-value { font-size: 0.9rem; font-weight: 600; margin-left: auto; }
+        .top-offenders-section { margin-bottom: 2rem; }
+        .top-offenders-section h3 { margin-bottom: 1rem; font-size: 1.25rem; }
+        .offenders-table { width: 100%; border-collapse: collapse; }
+        .offenders-table th, .offenders-table td { padding: 0.75rem; text-align: left; border-bottom: 1px solid var(--border-color); }
+        .offenders-table th { background: var(--bg-tertiary); font-weight: 600; }
+        .offenders-table .rank { width: 50px; }
     </style>
 </head>
 <body>
@@ -119,43 +99,130 @@
                     </button>
                 </div>
             </header>
-    <main class="container">
-        <section class="agents-bubbles-section" id="agentsBubblesSection">
-            <header class="agents-bubbles-header">
-                <button type="button" class="agents-bubbles-arrow-btn expanded" id="agentsBubblesToggle" aria-label="Desplegar o reducir">▶</button>
-                <h2 class="agents-bubbles-title">Agents</h2>
-            </header>
-            <div class="agents-bubbles-row">
-                <div class="agents-bubble agents-bubble-blue">
-                    <button type="button" class="agents-bubble-options" aria-label="Opciones">⋮</button>
-                    <h3 class="agents-bubble-title">Teleperformance - Agents</h3>
-                    <div class="agents-bubble-progress-row">
-                        <span class="agents-bubble-progress-label">Agents</span>
-                        <div class="agents-bubble-dots" id="dotsTeleperformance" aria-hidden="true"></div>
-                        <span class="agents-bubble-progress-value" id="countTeleperformance">0</span>
+            <main class="container">
+                <header class="page-header">
+                    <h2>Team – Top Offenders</h2>
+                    <p class="subtitle">Agentes con más casos críticos en el periodo (Teleperformance y Konecta)</p>
+                </header>
+                <div class="date-filter" style="margin-bottom: 1.5rem;">
+                    <label for="dateFrom">Desde:</label>
+                    <input type="date" id="dateFrom">
+                    <label for="dateTo">Hasta:</label>
+                    <input type="date" id="dateTo">
+                    <button type="button" class="btn btn-primary" id="btnFilter">Filtrar</button>
+                </div>
+                <div class="top-offenders-section" id="sectionTeleperformance">
+                    <h3>Teleperformance – Top Offenders</h3>
+                    <div class="table-container">
+                        <table class="data-table offenders-table">
+                            <thead>
+                                <tr><th class="rank">#</th><th>Agente</th><th>Casos críticos</th></tr>
+                            </thead>
+                            <tbody id="tbodyTP"></tbody>
+                        </table>
                     </div>
                 </div>
-                <div class="agents-bubble agents-bubble-purple">
-                    <button type="button" class="agents-bubble-options" aria-label="Opciones">⋮</button>
-                    <h3 class="agents-bubble-title">Konecta - Agents</h3>
-                    <div class="agents-bubble-progress-row">
-                        <span class="agents-bubble-progress-label">Agents</span>
-                        <div class="agents-bubble-dots" id="dotsKonecta" aria-hidden="true"></div>
-                        <span class="agents-bubble-progress-value" id="countKonecta">0</span>
+                <div class="top-offenders-section" id="sectionKonecta">
+                    <h3>Konecta – Top Offenders</h3>
+                    <div class="table-container">
+                        <table class="data-table offenders-table">
+                            <thead>
+                                <tr><th class="rank">#</th><th>Agente</th><th>Casos críticos</th></tr>
+                            </thead>
+                            <tbody id="tbodyKonecta"></tbody>
+                        </table>
                     </div>
                 </div>
-            </div>
-        </section>
-    </main>
+            </main>
         </div>
     </div>
-
-    <!-- Supabase SDK v2 -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.0/dist/umd/supabase.min.js"></script>
     <script src="supabase-config.js"></script>
     <script src="app.js"></script>
     <script src="sidebar.js"></script>
-    <script src="detalle-auditorias-agents.js"></script>
+    <script>
+(function() {
+    function normalizeBPO(bpo) {
+        if (!bpo) return '';
+        const s = String(bpo).toLowerCase().trim();
+        if (s.includes('teleperformance') || s === 'tp') return 'Teleperformance';
+        if (s.includes('konecta')) return 'Konecta';
+        return s;
+    }
+
+    function isCritical(criticality) {
+        const c = (criticality || '').toLowerCase();
+        return c === 'critico' || c === 'crítico';
+    }
+
+    async function load() {
+        const dateFrom = document.getElementById('dateFrom').value;
+        const dateTo = document.getElementById('dateTo').value;
+        if (!dateFrom || !dateTo) return;
+
+        const audits = await getAudits();
+        const agents = await getAgents();
+        const agentMap = {};
+        (agents || []).forEach(a => { agentMap[a.id] = a.name || 'Sin nombre'; });
+
+        const from = new Date(dateFrom);
+        const to = new Date(dateTo);
+
+        const byAgent = {};
+        audits.forEach(a => {
+            if (!isCritical(a.criticality)) return;
+            const d = new Date(a.callDate || a.auditDate);
+            if (isNaN(d) || d < from || d > to) return;
+            const bpo = normalizeBPO(a.bpo);
+            if (bpo !== 'Teleperformance' && bpo !== 'Konecta') return;
+            const key = bpo + '|' + (a.agentId || '');
+            if (!byAgent[key]) byAgent[key] = { bpo, agentId: a.agentId, count: 0 };
+            byAgent[key].count++;
+        });
+
+        const tp = [];
+        const konecta = [];
+        Object.keys(byAgent).forEach(k => {
+            const o = byAgent[k];
+            o.name = agentMap[o.agentId] || o.agentId || '—';
+            if (o.bpo === 'Teleperformance') tp.push(o);
+            else konecta.push(o);
+        });
+        tp.sort((a, b) => b.count - a.count);
+        konecta.sort((a, b) => b.count - a.count);
+
+        function fillTable(tbody, list) {
+            tbody.innerHTML = '';
+            if (list.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="3" class="no-data">No hay casos críticos en el periodo</td></tr>';
+                return;
+            }
+            list.forEach((item, i) => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = '<td class="rank">' + (i + 1) + '</td><td>' + escapeHtml(item.name) + '</td><td>' + item.count + '</td>';
+                tbody.appendChild(tr);
+            });
+        }
+        function escapeHtml(s) {
+            const div = document.createElement('div');
+            div.textContent = s;
+            return div.innerHTML;
+        }
+
+        fillTable(document.getElementById('tbodyTP'), tp);
+        fillTable(document.getElementById('tbodyKonecta'), konecta);
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        const today = new Date().toISOString().split('T')[0];
+        const firstDay = new Date();
+        firstDay.setMonth(firstDay.getMonth() - 1);
+        document.getElementById('dateFrom').value = firstDay.toISOString().split('T')[0];
+        document.getElementById('dateTo').value = today;
+        document.getElementById('btnFilter').addEventListener('click', load);
+        load();
+    });
+})();
+    </script>
 </body>
 </html>
-

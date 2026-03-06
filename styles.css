@@ -1469,4 +1469,343 @@ body {
     font-size: 0.9rem;
 }
 
+/* ===================================
+   Layout con Sidebar izquierda (estilo weihu)
+   =================================== */
+.app-layout {
+    display: flex;
+    min-height: 100vh;
+}
+
+.sidebar {
+    width: 260px;
+    min-width: 260px;
+    background: linear-gradient(180deg, #f5f3ff 0%, #faf8ff 40%, #fdf8f8 100%);
+    border-right: 1px solid #e5e2ec;
+    display: flex;
+    flex-direction: column;
+    flex-shrink: 0;
+    position: fixed;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    z-index: 1000;
+    transition: width 0.25s ease, min-width 0.25s ease;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+.sidebar.collapsed {
+    width: 72px;
+    min-width: 72px;
+}
+
+.sidebar.collapsed .sidebar-text,
+.sidebar.collapsed .sidebar-section-title,
+.sidebar.collapsed .sidebar-brand-text,
+.sidebar.collapsed .sidebar-badge {
+    display: none;
+}
+
+.sidebar-header {
+    padding: 1.25rem 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    border-bottom: 1px solid #e5e2ec;
+}
+
+.sidebar-logo {
+    width: 40px;
+    height: 40px;
+    background: #5b4d96;
+    border-radius: 8px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-image: url("data:image/svg+xml,%3Csvg width='24' height='24' viewBox='0 0 24 24' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M7 4v4M7 16v4M17 4v4M17 16v4M4 7h4M4 17h4M16 7h4M16 17h4' stroke='rgba(255,255,255,0.5)' stroke-width='1.5' stroke-linecap='round'/%3E%3Cpath d='M12 6v4M10 8h4' stroke='rgba(255,255,255,0.8)' stroke-width='1.2' stroke-linecap='round'/%3E%3C/svg%3E");
+    background-size: 22px 22px;
+    background-position: center;
+    background-repeat: no-repeat;
+}
+
+.sidebar-brand {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    min-width: 0;
+}
+
+.sidebar-brand-text {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #374151;
+    white-space: normal;
+    overflow: visible;
+    text-overflow: unset;
+    letter-spacing: -0.01em;
+    line-height: 1.3;
+    word-break: break-word;
+}
+
+.sidebar-toggle {
+    width: 32px;
+    height: 32px;
+    border: none;
+    background: #e5e2ec;
+    border-radius: 8px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #5b4d96;
+    flex-shrink: 0;
+    transition: var(--transition);
+}
+
+.sidebar-toggle:hover {
+    background: #ddd8e8;
+}
+
+.sidebar-toggle svg {
+    width: 16px;
+    height: 16px;
+}
+
+.sidebar-nav {
+    flex: 1;
+    overflow-y: auto;
+    padding: 1rem 0.75rem;
+}
+
+.sidebar-link {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.7rem 0.9rem;
+    border-radius: 10px;
+    color: #374151;
+    text-decoration: none;
+    font-weight: 500;
+    font-size: 0.9rem;
+    transition: var(--transition);
+    margin-bottom: 2px;
+}
+
+.sidebar-link:hover {
+    background: #ede9fe;
+    color: #374151;
+}
+
+.sidebar-link.active {
+    background: #e9e7ff;
+    color: #374151;
+}
+
+.sidebar-link.active .sidebar-link-icon {
+    color: #5b4d96;
+}
+
+.sidebar-link.active .sidebar-link-icon svg {
+    stroke: #5b4d96;
+}
+
+.sidebar-link-icon {
+    width: 22px;
+    height: 22px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    color: #6b7280;
+}
+
+.sidebar-link-icon svg {
+    width: 20px;
+    height: 20px;
+    stroke: #6b7280;
+    transition: stroke 0.2s;
+}
+
+.sidebar-link:hover .sidebar-link-icon svg,
+.sidebar-link.active .sidebar-link-icon svg {
+    stroke: #5b4d96;
+}
+
+.sidebar-link.active .sidebar-link-icon.icon-check-circle svg circle {
+    fill: #5b4d96;
+}
+
+.sidebar-link.active .sidebar-link-icon.icon-check-circle svg path {
+    stroke: #fff;
+}
+
+.sidebar-text {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.sidebar-badge {
+    margin-left: auto;
+    background: #e5e7eb;
+    color: #5b4d96;
+    font-size: 0.8rem;
+    font-weight: 600;
+    padding: 0.25rem 0.6rem;
+    border-radius: 8px;
+    flex-shrink: 0;
+}
+
+.sidebar-link.active .sidebar-badge {
+    background: #ddd6fe;
+    color: #5b4d96;
+}
+
+.sidebar-section-title {
+    font-size: 0.65rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: #6b7280;
+    padding: 1.1rem 0.9rem 0.35rem;
+    margin-top: 0.25rem;
+}
+
+.sidebar-section-title:first-child {
+    margin-top: 0;
+    padding-top: 0.2rem;
+}
+
+.sidebar-footer {
+    padding: 1rem 0.75rem;
+    border-top: 1px solid #e5e2ec;
+}
+
+.sidebar-footer .sidebar-link {
+    margin-bottom: 0;
+}
+
+.main-content-wrap {
+    flex: 1;
+    margin-left: 260px;
+    min-width: 0;
+    transition: margin-left 0.25s ease;
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+}
+
+.sidebar.collapsed ~ .main-content-wrap {
+    margin-left: 72px;
+}
+
+/* ===================================
+   Top bar (Welcome + Find something + Help + Bell)
+   =================================== */
+.top-header {
+    background: #ffffff;
+    border-bottom: 1px solid #e5e7eb;
+    padding: 1rem 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    flex-shrink: 0;
+    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.04);
+}
+
+.top-header-welcome {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-size: 0.95rem;
+    color: #6b7280;
+    font-weight: 400;
+    white-space: nowrap;
+}
+
+.top-header-search-wrap {
+    flex: 1;
+    max-width: 420px;
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.top-header-search-wrap .search-icon {
+    position: absolute;
+    left: 1rem;
+    width: 20px;
+    height: 20px;
+    color: #9ca3af;
+    pointer-events: none;
+}
+
+.top-header-search-wrap input {
+    width: 100%;
+    padding: 0.65rem 1rem 0.65rem 2.75rem;
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+    font-size: 0.9rem;
+    color: #374151;
+    background: #ffffff;
+    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.04);
+    font-family: inherit;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.top-header-search-wrap input::placeholder {
+    color: #9ca3af;
+}
+
+.top-header-search-wrap input:focus {
+    outline: none;
+    border-color: #d1d5db;
+    box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.04);
+}
+
+.top-header-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-left: auto;
+}
+
+.top-header-btn-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    border: 1px solid #e5e7eb;
+    background: #ffffff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: #374151;
+    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.04);
+    transition: background 0.2s, border-color 0.2s;
+}
+
+.top-header-btn-icon:hover {
+    background: #f9fafb;
+    border-color: #d1d5db;
+}
+
+.top-header-btn-icon svg {
+    width: 20px;
+    height: 20px;
+    stroke: #4b5563;
+}
+
+@media (max-width: 1024px) {
+    .sidebar {
+        width: 72px;
+        min-width: 72px;
+    }
+    .sidebar .sidebar-text,
+    .sidebar .sidebar-section-title,
+    .sidebar .sidebar-brand-text,
+    .sidebar .sidebar-badge { display: none; }
+    .main-content-wrap { margin-left: 72px; }
+}
+
 
